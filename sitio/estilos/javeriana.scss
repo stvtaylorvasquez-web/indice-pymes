@@ -236,3 +236,43 @@ form.oi-3a86ea-table, .card form[class*="-table"] { font-size: .82rem; }
 .tip-mapa { display: none; position: absolute; z-index: 5; pointer-events: none; background: #fff; border: 1px solid $linea;
   border-radius: 8px; padding: .5rem .65rem; font-size: .8rem; color: $tinta; box-shadow: 0 6px 18px rgba(20,33,61,.12); max-width: 230px; line-height: 1.4; }
 .tip-mapa small { color: $tinta-3; }
+.multiples.tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 576px) { .multiples.tres { grid-template-columns: 1fr; } }
+.tendencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .8rem; }
+.tend-grupo { border-radius: 10px; padding: .6rem .75rem; border: 1px solid $linea; }
+.tend-titulo { font-weight: 700; font-size: .85rem; margin-bottom: .35rem; }
+.tend-titulo small { font-weight: 400; color: $tinta-3; }
+.t-mejor { background: #EEF7F1; border-color: #CDE8D6; } .t-mejor .tend-titulo { color: #067647; }
+.t-peor { background: #FDF0EE; border-color: #F5D2CD; } .t-peor .tend-titulo { color: #B42318; }
+.t-igual { background: #F4F6FA; } .t-igual .tend-titulo { color: $tinta-2; }
+.tend-fila { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; padding: .18rem 0; border-top: 1px dashed rgba(20,33,61,.08); }
+.tend-fila:first-of-type { border-top: none; }
+.tend-nombre { color: $tinta; }
+.tend-val { color: $tinta-2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.matriz-sector td { font-size: .85rem; padding: .5rem .3rem; }
+.matriz-sector tr { cursor: pointer; }
+.matriz-sector tr:hover th.fila { color: $jav-azul; text-decoration: underline; }
+.matriz-sector tr.fila-activa th.fila { color: $jav-azul-osc; font-weight: 800; }
+.matriz-sector th.fila small { font-weight: 400; color: $tinta-3; }
+// Ficha por empresa
+.chips-empresas { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .3rem; }
+.chip-empresa { background: #fff; border: 1px solid #C9D6EC; border-radius: 10px; padding: .4rem .7rem; text-align: left; cursor: pointer;
+  font-size: .82rem; font-weight: 600; color: $jav-azul-osc; display: flex; flex-direction: column; max-width: 320px; }
+.chip-empresa small { font-weight: 400; color: $tinta-3; font-size: .72rem; }
+.chip-empresa:hover { border-color: $jav-azul; background: #EEF3FA; }
+.ficha-vacia { border: 2px dashed $linea; border-radius: 14px; padding: 1.4rem; text-align: center; color: $tinta-3; background: #fff; }
+.ficha { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between;
+  background: linear-gradient(120deg, $jav-azul-osc 0%, $jav-azul 75%); color: #fff; border-radius: 14px; padding: 1.2rem 1.5rem; }
+.ficha .kicker { font-size: .72rem; letter-spacing: .12em; color: $jav-amarillo; font-weight: 700; text-transform: uppercase; }
+.ficha h2 { font-family: $headings-font-family; color: #fff; margin: .2rem 0 .3rem; font-size: clamp(1.3rem, 2.2vw, 1.8rem); }
+.ficha p { margin: 0; color: rgba(255,255,255,.82); font-size: .86rem; }
+.ficha-datos-clave { display: grid; grid-template-columns: repeat(2, minmax(150px, auto)); gap: .6rem 1.4rem; background: rgba(255,255,255,.96);
+  color: $tinta; border-radius: 12px; padding: .8rem 1rem; }
+.ficha-datos-clave span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: $tinta-3; font-weight: 600; }
+.ficha-datos-clave b { font-size: 1.05rem; }
+.ficha-datos-clave .tenue { font-size: .82rem; color: $tinta-3; font-weight: 500; }
+.comparacion { font-size: .74rem; font-weight: 700; margin: .1rem 0 .2rem; }
+.comparacion.bien { color: #067647; } .comparacion.mal { color: #B42318; }
+// Barra de pestañas en una sola línea
+.navbar .nav-link { white-space: nowrap; padding-left: .55rem !important; padding-right: .55rem !important; font-size: .88rem; }
+@media (min-width: 992px) and (max-width: 1500px) { .navbar .navbar-title { font-size: 1.1rem; } .navbar .nav-link { font-size: .82rem; padding-left: .45rem !important; padding-right: .45rem !important; } }

@@ -100,7 +100,7 @@
     return html`<div class="subtitulo">El semillero publica la alerta solo de forma agregada.</div>
       ${Inputs.table(filas, {format: {"Prob. promedio": fPct, Empresas: fEnt}, layout: "auto"})}`
   }
-  const filas = al.filter(d => !q || String(d.nit).includes(q) || (d.razon_social ?? "").toLowerCase().includes(q))
+  const filas = al.filter(d => !q || String(d.nit).includes(q) || String(d.razon_social ?? "").toLowerCase().includes(q))
     .map(d => ({Empresa: d.razon_social, NIT: d.nit, Sector: nomSector.get(d.sec) ?? d.sec, Departamento: nomDepto(d.dep),
                 Zona: nomZona.get(d.zona), "Z'": d.z, Probabilidad: d.prob, Nivel: d.nivel}))
   const maxP = d3.max(alerta, d => d.prob)

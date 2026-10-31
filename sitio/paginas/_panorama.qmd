@@ -143,41 +143,9 @@
 ## Row {height="auto"}
 
 ```{ojs}
-//| title: "¿Cómo se distribuyen las empresas según el Z' de Altman?"
-{
-  const filas = porAnio.flatMap(p => {
-    const rows = base.filter(d => d.anio === p.anio && d.zona)
-    const tot = rows.length
-    return ZONAS.map(z => { const n = rows.filter(d => d.zona === z.k).length
-      return {anio: p.anio, zona: z.k, nombre: z.nombre, n, pct: tot ? n / tot : 0} })
-  })
-  const plot = Plot.plot({
-    width: anchoCompleto, height: 320, marginLeft: 44, marginBottom: 28, style: estilo,
-    x: {type: "band", label: null, tickFormat: d => anchoCompleto < 480 ? "’" + String(d).slice(2) : String(d), padding: 0.18},
-    y: {label: null, percent: true, tickFormat: d => d + "%", ticks: 5, grid: true},
-    color: {domain: ZONAS.map(z => z.k), range: ZONAS.map(z => z.color)},
-    marks: [
-      Plot.barY(filas, Plot.stackY({order: ["D", "G", "S"]}, {
-        x: "anio", y: "pct", fill: "zona", stroke: "white", strokeWidth: 1.5,
-        fillOpacity: d => (anio === "*" || d.anio === anio) ? 1 : 0.45,
-        channels: {Zona: "nombre", Empresas: d => fEnt(d.n), Participación: d => fPct(d.pct)},
-        tip: {format: {x: true, y: false, fill: false, Zona: true, Empresas: true, Participación: true}, fontSize: 12}
-      })),
-      Plot.text(filas.filter(d => d.zona === "D" && d.anio === foco), {
-        x: "anio", y: "pct", text: d => fPct(d.pct), dy: -6, lineAnchor: "bottom", fill: "#14213D", fontWeight: 700, fontSize: 12}),
-      Plot.ruleY([0], {stroke: "#C8CDD8"})
-    ]
-  })
-  return conPNG(html`${leyenda(ZONAS)}${plot}`, "zonas_por_anio")
-}
-```
-
-## Row {height="auto"}
-
-```{ojs}
 //| title: "Indicadores clave: evolución de las medianas"
 {
-  const lista = ["cr", "ti", "om", "ra", "re"].map(k => indPorK.get(k))
+  const lista = ["cr", "ti", "ra"].map(k => indPorK.get(k))
   const panel = (ind) => {
     const pts = porAnio.filter(d => Number.isFinite(d[ind.k]))
     const f = pts.find(d => d.anio === foco)
@@ -185,7 +153,7 @@
     const fmtEje = ind.pct ? (d => loc.format(ext[1] - ext[0] < 0.04 ? ".1%" : ".0%")(d)) : (d => loc.format(".1f")(d))
     return html`<div><h4>${ind.nombre}</h4><div class="ult">${f ? ind.fmt(f[ind.k]) : "–"} <small>${foco}</small></div>
     ${Plot.plot({
-      width: 260, height: 140, marginLeft: 42, marginRight: 10, marginTop: 10, marginBottom: 22,
+      width: anchoTercio, height: 170, marginLeft: 42, marginRight: 10, marginTop: 10, marginBottom: 22,
       style: {...estilo, fontSize: "10.5px", color: "#7A8294"},
       x: {label: null, tickFormat: d => "’" + String(d).slice(2), ticks: anios.filter((a, i) => i % 3 === 0), domain: d3.extent(anios)},
       y: {label: null, grid: true, ticks: 3, nice: true, tickFormat: fmtEje},
@@ -199,7 +167,46 @@
     })}</div>`
   }
   return html`<div class="subtitulo">Mediana de las empresas filtradas en cada año (${textoFiltro.split(" · ").slice(1).join(" · ")}). El punto amarillo marca ${foco}.</div>
-    <div class="multiples">${lista.map(panel)}</div>`
+    <div class="multiples tres">${lista.map(panel)}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Qué mejoró y qué empeoró en 10 años?"
+{
+  // Dirección deseable de cada indicador: +1 = mejor si sube, -1 = mejor si baja
+  const DEF = {
+    cr: ["Razón corriente", 1, x => fDec(x) + "×"], at: ["Prueba ácida", 1, x => fDec(x) + "×"],
+    wk_c: ["Capital de trabajo / activo", 1, fPct], ct: ["Efectivo / pasivo corriente", 1, fPct],
+    ti: ["Endeudamiento total", -1, fPct], fi: ["Deuda financiera / ingresos", -1, fPct],
+    tl: ["Pasivo / patrimonio", -1, x => fDec(x) + "×"], fl: ["Deuda financiera / patrimonio", -1, fPct],
+    gm: ["Margen bruto", 1, fPct], om_c: ["Margen operacional", 1, fPct], nm: ["Margen neto", 1, fPct],
+    ra: ["ROA", 1, fPct], re: ["ROE", 1, fPct],
+    ar: ["Días de cartera", -1, x => fEnt(Math.round(x)) + " días"], it: ["Días de inventario", -1, x => fEnt(Math.round(x)) + " días"],
+    z: ["Z' de Altman", 1, fDec]
+  }
+  const filas = tendencias.filter(d => DEF[d.variable]).map(d => {
+    const [nombre, dir, fmt] = DEF[d.variable]
+    const cambio = d.mediana_final - d.mediana_2016
+    const estado = !d.significativa ? "igual" : (Math.sign(cambio) === dir ? "mejor" : "peor")
+    return {...d, nombre, fmt, cambio, estado}
+  })
+  const grupo = (est, titulo, icono, clase) => {
+    const xs = filas.filter(d => d.estado === est)
+    if (!xs.length) return ""
+    return html`<div class="tend-grupo ${clase}"><div class="tend-titulo">${icono} ${titulo} <small>(${xs.length})</small></div>
+      ${xs.map(d => html`<div class="tend-fila"><span class="tend-nombre">${d.nombre}</span>
+        <span class="tend-val">${d.fmt(d.mediana_2016)} → <b>${d.fmt(d.mediana_final)}</b></span></div>`)}</div>`
+  }
+  return html`<div class="subtitulo">Mediana de ${anioMin} frente a ${anioMax} en el panel completo. "Mejoró" o "empeoró" solo si la tendencia
+    es estadísticamente significativa al 1% (calculada en R, script 02, con errores agrupados por empresa).</div>
+    <div class="tendencias">
+      ${grupo("mejor", "Mejoró", "▲", "t-mejor")}
+      ${grupo("peor", "Empeoró", "▼", "t-peor")}
+      ${grupo("igual", "Sin cambio significativo", "■", "t-igual")}
+    </div>`
 }
 ```
 

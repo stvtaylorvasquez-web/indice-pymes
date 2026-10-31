@@ -54,6 +54,11 @@ web <- data.frame(
   pn   = panel$patrimonio_negativo, # 1 = patrimonio negativo
   cuad = as.integer(substr(panel$cuadrante, 1, 1)),  # 1 Crítico ... 4 Holgada (script 03)
   dec  = panel$decil_ti,            # decil de endeudamiento dentro del año (script 03)
+  x1   = round(panel$x1, 4),        # componentes del Z' (pestaña "¿Por qué caen?")
+  x2   = round(panel$x2, 4),
+  x3   = round(panel$x3, 4),
+  x4   = round(panel$x4, 4),
+  x5   = round(panel$x5, 4),
   stringsAsFactors = FALSE)
 escribir(web, "panel.csv")
 
@@ -93,6 +98,17 @@ num <- sapply(desc, is.numeric)
 desc[num] <- lapply(desc[num], function(x) signif(x, 5))
 escribir(desc, "descriptiva.csv")
 
+# ---- tendencias.csv (script 02) e indicadores_vs_z.csv (script 03, D1) ------------
+tend <- leer("04_tendencias.csv")
+escribir(data.frame(variable = tend$variable, grupo = tend$grupo,
+                    mediana_2016 = signif(tend$mediana_2016, 5), mediana_final = signif(tend$mediana_final, 5),
+                    pct_empresas_al_alza = round(tend$pct_empresas_al_alza, 1),
+                    significativa = as.integer(tend$significativa_1pct)), "tendencias.csv")
+d1 <- leer(file.path("bivariado", "D1_indicadores_vs_z.csv"))
+d1$es_componente_z <- as.integer(d1$es_componente_z)
+d1[c("rho_con_z", "rho_intra_empresa")] <- lapply(d1[c("rho_con_z", "rho_intra_empresa")], round, 4)
+escribir(d1, "indicadores_vs_z.csv")
+
 # ---- diccionario.csv ------------------------------------------------------------------
 escribir(data.frame(
   columna = names(web),
@@ -105,7 +121,9 @@ escribir(data.frame(
     "ROE: utilidad neta / patrimonio", "Días de cartera: cuentas por cobrar x 365 / ingresos",
     "1 si el patrimonio es negativo",
     "Cuadrante: 1 Crítico, 2 Tensión de liquidez, 3 Apalancada con liquidez, 4 Holgada (razón corriente < 1; endeudamiento > 0,7)",
-    "Decil de endeudamiento dentro del año (1 = menos endeudadas)"),
+    "Decil de endeudamiento dentro del año (1 = menos endeudadas)",
+    "X1 Capital de trabajo / activo total", "X2 Utilidades acumuladas / activo total",
+    "X3 Utilidad operacional / activo total", "X4 Patrimonio / pasivo total", "X5 Ventas / activo total"),
   stringsAsFactors = FALSE), "diccionario.csv")
 
 # ---- meta.json -------------------------------------------------------------------

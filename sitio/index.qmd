@@ -30,6 +30,8 @@ modelos  = FileAttachment("datos/modelos.csv").csv({typed: true})
 descriptiva = FileAttachment("datos/descriptiva.csv").csv({typed: true})
 diccionario = FileAttachment("datos/diccionario.csv").csv()
 empresas = FileAttachment("datos/empresas.csv").csv({typed: true})
+tendencias = FileAttachment("datos/tendencias.csv").csv({typed: true})
+indVsZ = FileAttachment("datos/indicadores_vs_z.csv").csv({typed: true})
 
 // ===================== FORMATOS (estilo colombiano: coma decimal) =====================
 loc  = d3.formatLocale({decimal: ",", thousands: ".", grouping: [3], currency: ["$", ""]})
@@ -313,6 +315,11 @@ anchoMedio = width > 992 ? Math.floor(anchoUtil / 2) - 48 : anchoUtil - 36
 ```{ojs}
 //| output: false
 anchoCompleto = anchoUtil - 48
+```
+
+```{ojs}
+//| output: false
+anchoTercio = width > 992 ? Math.floor((anchoUtil - 48) / 3) - 28 : anchoUtil - 36
 // Controles locales de algunas tarjetas (se muestran dentro de su tarjeta)
 ```
 
@@ -336,8 +343,20 @@ viewof indSel = Inputs.select(new Map(INDS.map(d => [d.nombre, d.k])), {value: "
 
 ```{ojs}
 //| output: false
-viewof grupoDesc = Inputs.radio(new Map([["Todos", "*"], ["Liquidez", "Liquidez"], ["Endeudamiento", "Endeudamiento"],
-  ["Rentabilidad", "Rentabilidad"], ["Eficiencia", "Eficiencia"], ["Altman Z'", "Altman Z'"]]), {value: "*", label: "Grupo"})
+// Componentes del Z' de Altman: peso y nombre para el público
+COMPS = [
+  {k: "x1", peso: 0.717, nombre: "Liquidez", detalle: "capital de trabajo / activo", color: "#7FA3D6"},
+  {k: "x2", peso: 0.847, nombre: "Utilidades acumuladas", detalle: "utilidades retenidas / activo", color: "#2C5697"},
+  {k: "x3", peso: 3.107, nombre: "Rentabilidad operativa", detalle: "utilidad operacional / activo", color: "#E8703A"},
+  {k: "x4", peso: 0.420, nombre: "Solvencia", detalle: "patrimonio / pasivo", color: "#B42318"},
+  {k: "x5", peso: 0.998, nombre: "Rotación de activos", detalle: "ventas / activo", color: "#D9A400"}
+]
+```
+
+```{ojs}
+//| output: false
+viewof buscarFicha = Inputs.text({placeholder: "Escriba el nombre o el NIT…", label: "Buscar empresa",
+  datalist: empresas.map(d => String(d.razon_social)), width: 420})
 ```
 
 ```{ojs}
@@ -361,6 +380,56 @@ estilo = Object.assign({}, {fontFamily: "Inter, sans-serif", fontSize: "12px", c
 ```
 
 
+```{ojs}
+//| output: false
+// Caídas a Distress: empresa en Gris o Segura en t y en Distress en t+1.
+// dc = cambio en la contribución de cada componente (peso × X) entre t y t+1 (mismo cálculo que el script 03, D3).
+function caidas(filas) {
+  const pe = porEmpresa(filas)
+  const usarTodos = anio === "*" || anio === anioMin
+  const caen = [], quedan = []
+  for (const m of pe.values()) for (const [a, d0] of m) {
+    const d1 = m.get(a + 1)
+    if (!d1 || !d0.zona || !d1.zona || d0.zona === "D") continue
+    if (!usarTodos && a + 1 !== anio) continue
+    const dc = {}
+    let ok = true
+    for (const c of COMPS) { const v = c.peso * (d1[c.k] - d0[c.k]); if (!Number.isFinite(v)) ok = false; dc[c.k] = v }
+    if (!ok) continue
+    const fila = {nit: d0.nit, sec: d0.sec, dep: d0.dep, anio: a + 1, ...dc}
+    if (d1.zona === "D") {
+      fila.mayor = COMPS.reduce((m, c) => dc[c.k] < dc[m] ? c.k : m, "x1")
+      caen.push(fila)
+    } else quedan.push(fila)
+  }
+  return {caen, quedan, usarTodos}
+}
+```
+
+```{ojs}
+//| output: false
+// Ficha por empresa: coincidencias del buscador y empresa elegida
+coincidencias = {
+  const q = (buscarFicha ?? "").trim().toLowerCase()
+  if (q.length < 3) return []
+  return empresas.filter(d => String(d.nit).includes(q) || String(d.razon_social ?? "").toLowerCase().includes(q)).slice(0, 12)
+}
+```
+
+```{ojs}
+//| output: false
+empresaFicha = {
+  const q = (buscarFicha ?? "").trim().toLowerCase()
+  if (!q) return null
+  return empresas.find(d => String(d.razon_social ?? "").toLowerCase() === q || String(d.nit) === q) ?? (coincidencias.length === 1 ? coincidencias[0] : null)
+}
+```
+
+```{ojs}
+//| output: false
+filasFicha = empresaFicha ? datos.filter(d => d.nit === empresaFicha.nit).sort((a, b) => a.anio - b.anio) : []
+```
+
 {{< include paginas/_panorama.qmd >}}
 
 {{< include paginas/_indicadores.qmd >}}
@@ -368,6 +437,10 @@ estilo = Object.assign({}, {fontFamily: "Inter, sans-serif", fontSize: "12px", c
 {{< include paginas/_liquidez.qmd >}}
 
 {{< include paginas/_zscore.qmd >}}
+
+{{< include paginas/_porque.qmd >}}
+
+{{< include paginas/_empresas.qmd >}}
 
 {{< include paginas/_alerta.qmd >}}
 

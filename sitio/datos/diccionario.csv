@@ -15,3 +15,8 @@
 "pn","1 si el patrimonio es negativo"
 "cuad","Cuadrante: 1 Crítico, 2 Tensión de liquidez, 3 Apalancada con liquidez, 4 Holgada (razón corriente < 1; endeudamiento > 0,7)"
 "dec","Decil de endeudamiento dentro del año (1 = menos endeudadas)"
+"x1","X1 Capital de trabajo / activo total"
+"x2","X2 Utilidades acumuladas / activo total"
+"x3","X3 Utilidad operacional / activo total"
+"x4","X4 Patrimonio / pasivo total"
+"x5","X5 Ventas / activo total"

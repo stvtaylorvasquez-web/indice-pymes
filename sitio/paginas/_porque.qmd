@@ -1,0 +1,151 @@
+# ¿Por qué caen?
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Componentes del Z' de Altman", "¿Qué explica que una empresa caiga a Distress?",
+  html`El Z' suma cinco componentes: <b>liquidez</b>, <b>utilidades acumuladas</b>, <b>rentabilidad operativa</b>,
+  <b>solvencia</b> y <b>rotación de activos</b>, cada uno con su peso. Aquí se mira a las empresas que pasaron de zona Gris o Segura
+  a Distress de un año al siguiente, y cuál de esos componentes se deterioró más. Filtro actual: <b>${textoFiltro}</b>.`)
+```
+
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Qué componente cae más cuando una empresa entra a Distress?"
+{
+  const {caen, usarTodos} = caidas(base)
+  if (!caen.length) return html`<p class="aviso">No hay caídas a Distress con estos filtros.</p>`
+  const filas = COMPS.map(c => ({...c, n: caen.filter(d => d.mayor === c.k).length}))
+    .map(d => ({...d, p: d.n / caen.length})).sort((a, b) => b.p - a.p)
+  const plot = Plot.plot({
+    width: anchoMedio, height: 260, marginLeft: 170, marginRight: 60, style: estilo,
+    x: {label: null, tickFormat: fPct0, grid: true, ticks: 4},
+    y: {label: null, domain: filas.map(d => d.nombre), tickSize: 0},
+    marks: [
+      Plot.barX(filas, {y: "nombre", x: "p", fill: "color", insetTop: 6, insetBottom: 6}),
+      Plot.text(filas, {y: "nombre", x: "p", text: d => fPct(d.p), dx: 6, textAnchor: "start", fontWeight: 700, fill: "#14213D"}),
+      Plot.ruleX([0], {stroke: "#C8CDD8"}),
+      Plot.tip(filas, Plot.pointerY({y: "nombre", x: "p", fontSize: 12,
+        title: d => `${d.nombre} (${d.detalle})\nFue el componente que más cayó en ${fEnt(d.n)} de ${fEnt(caen.length)} caídas (${fPct(d.p)})`}))
+    ]
+  })
+  const top = filas[0]
+  return conPNG(html`<div class="subtitulo">${fEnt(caen.length)} empresas cayeron a Distress
+    ${usarTodos ? `entre ${anioMin + 1} y ${anioMax}` : `en ${anio}`}. Para cada una se identifica el componente del Z' que más bajó.</div>
+    ${plot}
+    <div class="lectura"><p><b>Lectura:</b> en ${fPct(top.p)} de las caídas, lo que más se deterioró fue la <b>${top.nombre.toLowerCase()}</b> (${top.detalle}).</p></div>`,
+    "componente_principal_caidas")
+}
+```
+
+```{ojs}
+//| title: "Cambio de cada componente: empresas que caen frente a las que se mantienen"
+{
+  const {caen, quedan} = caidas(base)
+  if (!caen.length) return html`<p class="aviso">No hay caídas a Distress con estos filtros.</p>`
+  const filas = COMPS.flatMap(c => [
+    {comp: c.nombre, grupo: "Caen a Distress", v: d3.median(caen, d => d[c.k])},
+    {comp: c.nombre, grupo: "Se mantienen en Gris o Segura", v: d3.median(quedan, d => d[c.k])}])
+  const orden = COMPS.slice().sort((a, b) => d3.median(caen, d => d[a.k]) - d3.median(caen, d => d[b.k])).map(c => c.nombre)
+  const plot = Plot.plot({
+    width: anchoMedio, height: 260, marginLeft: 170, marginRight: 30, style: estilo,
+    x: {label: "Cambio mediano en la contribución al Z' (t → t+1) →", grid: true, tickFormat: d => loc.format("+.2f")(d)},
+    y: {label: null, domain: orden, tickSize: 0},
+    color: {domain: ["Caen a Distress", "Se mantienen en Gris o Segura"], range: ["#D03B3B", "#7A8294"]},
+    marks: [
+      Plot.ruleX([0], {stroke: "#14213D", strokeOpacity: 0.4}),
+      Plot.link(COMPS.map(c => ({comp: c.nombre, a: d3.median(caen, d => d[c.k]), b: d3.median(quedan, d => d[c.k])})),
+        {y1: "comp", y2: "comp", x1: "a", x2: "b", stroke: "#C9D3E6", strokeWidth: 3}),
+      Plot.dot(filas, {y: "comp", x: "v", fill: "grupo", r: 6, stroke: "white", strokeWidth: 1.5}),
+      Plot.tip(filas, Plot.pointer({y: "comp", x: "v", fontSize: 12, title: d => `${d.comp}\n${d.grupo}: ${loc.format("+.3f")(d.v)}`}))
+    ]
+  })
+  return conPNG(html`${leyenda([{nombre: "Caen a Distress", color: "#D03B3B"}, {nombre: "Se mantienen en Gris o Segura", color: "#7A8294"}])}
+    <div class="subtitulo">Cuánto cambia cada componente (ya multiplicado por su peso en el Z') de un año al siguiente.
+    Las empresas que se mantienen casi no cambian; las que caen pierden sobre todo rentabilidad y rotación.</div>${plot}`, "cambio_componentes")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Por sector: ¿qué explica las caídas?"
+{
+  const fuente = datos.filter(d => depto === "*" || d.dep === depto)
+  const {caen, usarTodos} = caidas(fuente)
+  const filas = Array.from(d3.group(caen, d => d.sec), ([s, xs]) => ({sec: s, sector: nomSector.get(s) ?? s, n: xs.length,
+      p: Object.fromEntries(COMPS.map(c => [c.k, xs.filter(d => d.mayor === c.k).length / xs.length]))}))
+    .filter(d => d.n >= 20).sort((a, b) => b.n - a.n)
+  if (!filas.length) return html`<p class="aviso">Ningún sector tiene al menos 20 caídas con estos filtros.</p>`
+  const color = d3.scaleLinear().domain([0, 0.6]).range(["#F4F6FA", "#1E3D6E"]).clamp(true).interpolate(d3.interpolateLab)
+  const tabla = html`<table class="matriz matriz-sector">
+    <tr><th class="fila">Sector (caídas)</th>${COMPS.map(c => html`<th><span style="color:${c.color}">●</span> ${c.nombre}</th>`)}</tr>
+    ${filas.map(f => {
+      const max = COMPS.reduce((m, c) => f.p[c.k] > f.p[m] ? c.k : m, "x1")
+      const tr = html`<tr class="${f.sec === sector ? "fila-activa" : ""}" title="Clic para filtrar por ${f.sector}">
+        <th class="fila">${f.sector} <small>(${fEnt(f.n)})</small></th>
+        ${COMPS.map(c => html`<td style="background:${color(f.p[c.k])};color:${f.p[c.k] > 0.35 ? "#fff" : "#14213D"};${c.k === max ? "box-shadow: inset 0 0 0 2px #F8CD00" : ""}">${fPct0(f.p[c.k])}</td>`)}
+      </tr>`
+      tr.onclick = () => fijar(viewof sector, sector === f.sec ? "*" : f.sec)
+      return tr })}
+  </table>`
+  return html`<div class="subtitulo">Porcentaje de las caídas a Distress de cada sector en que ese componente fue el que más bajó
+    (${usarTodos ? `${anioMin + 1}–${anioMax}` : anio}${depto === "*" ? "" : " · " + nomDepto(depto)}). Sectores con al menos 20 caídas.
+    El borde amarillo marca el componente principal de cada sector. Clic en una fila para filtrar el tablero.</div>${tabla}`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿De qué está hecho el Z' en cada zona?"
+{
+  const filas = ZONAS.flatMap(z => {
+    const rows = sel.filter(d => d.zona === z.k)
+    return COMPS.map(c => ({zona: z.nombre, comp: c.nombre, k: c.k, v: d3.median(rows, d => c.peso * d[c.k]) ?? 0}))
+  })
+  const plot = Plot.plot({
+    width: anchoMedio, height: 230, marginLeft: 80, marginRight: 20, style: estilo,
+    x: {label: "Contribución mediana al Z' →", grid: true, tickFormat: d => loc.format(".1f")(d)},
+    y: {label: null, domain: ZONAS.map(z => z.nombre), tickSize: 0},
+    color: {domain: COMPS.map(c => c.nombre), range: COMPS.map(c => c.color)},
+    marks: [
+      Plot.barX(filas, Plot.stackX({y: "zona", x: d => Math.max(0, d.v), fill: "comp", stroke: "white", strokeWidth: 1.5, insetTop: 8, insetBottom: 8,
+        channels: {Componente: "comp", Contribución: d => loc.format(".2f")(d.v)}, tip: {format: {x: false, fill: false}, fontSize: 12}})),
+      Plot.ruleX([1.23, 2.9], {stroke: "#14213D", strokeDasharray: "3 3", strokeOpacity: 0.6})
+    ]
+  })
+  return conPNG(html`${leyenda(COMPS)}<div class="subtitulo">Mediana de cada componente (peso × razón) por zona · ${textoFiltro}.
+    Las líneas punteadas son los cortes 1,23 y 2,9. En Distress, casi todo el puntaje viene de solvencia y rotación.</div>${plot}`, "composicion_z")
+}
+```
+
+```{ojs}
+//| title: "¿Qué otros indicadores se mueven con el Z'?"
+{
+  const NOMBRES = {cr: "Razón corriente", at: "Prueba ácida", wk_c: "Capital de trabajo / activo", ct: "Efectivo / pasivo corriente",
+    ti: "Endeudamiento total", fi: "Deuda financiera / ingresos", tl: "Pasivo / patrimonio", fl: "Deuda financiera / patrimonio",
+    gm: "Margen bruto", om_c: "Margen operacional", nm: "Margen neto", re: "ROE", ra: "ROA",
+    ar: "Días de cartera", it: "Días de inventario", st_c: "Días de proveedores"}
+  const filas = indVsZ.filter(d => !d.es_componente_z && NOMBRES[d.variable])
+    .map(d => ({...d, nombre: NOMBRES[d.variable]})).sort((a, b) => b.rho_con_z - a.rho_con_z)
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.max(260, filas.length * 22 + 40), marginLeft: 190, marginRight: 50, style: estilo,
+    x: {label: "Correlación de Spearman con el Z' →", domain: [-0.7, 0.7], grid: true, tickFormat: d => loc.format("+.1f")(d)},
+    y: {label: null, domain: filas.map(d => d.nombre), tickSize: 0},
+    marks: [
+      Plot.barX(filas, {y: "nombre", x: "rho_con_z", fill: d => d.rho_con_z > 0 ? "#2C5697" : "#D03B3B", insetTop: 3, insetBottom: 3}),
+      Plot.text(filas, {y: "nombre", x: "rho_con_z", text: d => loc.format("+.2f")(d.rho_con_z), dx: d => d.rho_con_z > 0 ? 6 : -6,
+        textAnchor: d => d.rho_con_z > 0 ? "start" : "end", fontSize: 10.5, fill: "#4A5468"}),
+      Plot.ruleX([0], {stroke: "#14213D"}),
+      Plot.tip(filas, Plot.pointerY({y: "nombre", x: "rho_con_z", fontSize: 12,
+        title: d => `${d.nombre}\nCorrelación con el Z': ${loc.format("+.2f")(d.rho_con_z)} (${d.magnitud})\nDentro de una misma empresa: ${loc.format("+.2f")(d.rho_intra_empresa)}`}))
+    ]
+  })
+  return conPNG(html`<div class="subtitulo">Azul: cuando el indicador sube, el Z' tiende a subir. Rojo: lo contrario.
+    Excluye los cinco componentes del Z'. Panel completo 2016–2025 (script 03, D1): no cambia con los filtros.</div>${plot}`, "indicadores_vs_z")
+}
+```

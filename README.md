@@ -3,7 +3,7 @@
 Tablero público del índice de salud financiera de las sociedades que reportan a la Superintendencia de
 Sociedades bajo NIIF para Pymes. Semillero de Investigación Pensamiento y Praxis, Pontificia Universidad Javeriana Cali.
 
-**Ver el tablero:** `https://<usuario>.github.io/<repositorio>/`. Funciona en cualquier navegador y en el celular, sin instalar nada.
+**Ver el tablero:** https://stvtaylorvasquez-web.github.io/indice-pymes/. Funciona en cualquier navegador y en el celular, sin instalar nada.
 
 ## Cómo está organizado
 
@@ -16,10 +16,12 @@ analisis/            Motor de cálculo en R (lo mantiene el semillero)
 sitio/               Tablero web (Quarto + Observable)
   index.qmd            Filtros globales, carga de datos y funciones compartidas
   paginas/             Una pestaña por archivo:
-    _panorama.qmd        Panorama (mapa, zonas, sectores, indicadores clave)
-    _indicadores.qmd     Indicadores por sector, evolución, ranking y descriptiva
+    _panorama.qmd        Panorama (mapa, sectores, indicadores clave, qué mejoró y qué empeoró)
+    _indicadores.qmd     Indicadores por sector, evolución y ranking
     _liquidez.qmd        Cuadrantes de liquidez y deuda, deciles de endeudamiento
     _zscore.qmd          Z' de Altman: zonas, distribución, transiciones, rachas
+    _porque.qmd          ¿Por qué caen? Componentes del Z' que explican la caída a Distress
+    _empresas.qmd        Ficha por empresa con buscador
     _alerta.qmd          Alerta temprana del año siguiente
     _datos.qmd           Centro de descargas (CSV y Excel)
     _metodologia.qmd     Metodología y limitaciones

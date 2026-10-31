@@ -106,30 +106,3 @@ encabezado("Indicadores financieros", "¿Cómo se comparan los sectores?",
     cada punto se une a ella para ver qué tan lejos está cada sector. Ordenado de mejor a peor.</div>${plot}`, "ranking_" + indSel)
 }
 ```
-
-## Row {height="auto"}
-
-```{ojs}
-//| title: "Estadística descriptiva de todos los indicadores"
-{
-  const NOMBRES = {cr: "Razón corriente", at: "Prueba ácida", wk_c: "Capital de trabajo / activo", ct: "Efectivo / pasivo corriente",
-    ti: "Endeudamiento total", fi: "Deuda financiera / ingresos", tl: "Pasivo / patrimonio", fl: "Deuda financiera / patrimonio",
-    gm: "Margen bruto", om_c: "Margen operacional", nm: "Margen neto", re: "ROE", ra: "ROA",
-    ar: "Días de cartera", it: "Días de inventario", st_c: "Días de proveedores",
-    x1: "X1 Capital de trabajo / activo", x2: "X2 Utilidades acumuladas / activo", x3: "X3 Utilidad operacional / activo",
-    x4: "X4 Patrimonio / pasivo", x5: "X5 Ventas / activo", z: "Z' de Altman"}
-  const [dim, cat] = zonaInd !== "*" ? ["zona", {D: "Distress Zone", G: "Gray Zone", S: "Safe Zone"}[zonaInd]]
-                   : anio !== "*" ? ["anio", String(anio)] : ["todas", "Total"]
-  const filas = descriptiva.filter(d => d.dimension === dim && String(d.categoria) === cat && (grupoDesc === "*" || d.grupo === grupoDesc))
-    .map(d => ({Indicador: NOMBRES[d.variable] ?? d.variable, Grupo: d.grupo, N: d.n, "% sin dato": d.pct_na / 100,
-                P25: d.p25, Mediana: d.mediana, P75: d.p75, RIQ: d.riq, "Media (w)": d.media_w, "Desv. est. (w)": d.sd_w}))
-  const num = (x) => x == null ? "–" : Math.abs(x) >= 100 ? fEnt(Math.round(x)) : loc.format(",.3f")(x)
-  return html`${viewof grupoDesc}
-    <div class="subtitulo">Todas las empresas${dim === "anio" ? ` · ${anio}` : dim === "zona" ? ` · zona ${nomZona.get(zonaInd)}` : " · 2016–2025"}.
-      Calculada en R (script 02) sobre el panel completo: no cambia con el filtro de sector ni de departamento.
-      Media y desviación con ratios winsorizados al 1% y 99% por año.</div>
-    ${Inputs.table(filas, {format: {N: fEnt, "% sin dato": fPct, P25: num, Mediana: num, P75: num, RIQ: num, "Media (w)": num, "Desv. est. (w)": num},
-      layout: "auto", rows: 23, maxHeight: 620})}
-    <div class="acciones">${botonesDescarga(() => filas, "estadistica_descriptiva")}</div>`
-}
-```

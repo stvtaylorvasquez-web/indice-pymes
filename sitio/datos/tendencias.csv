@@ -1,0 +1,23 @@
+"variable","grupo","mediana_2016","mediana_final","pct_empresas_al_alza","significativa"
+"cr","Liquidez",1.6596,2.2736,62.5,1
+"at","Liquidez",1.1887,1.6407,61.1,1
+"wk_c","Liquidez",0.16632,0.25794,64.5,1
+"ct","Liquidez",0.14553,0.22595,58.3,1
+"ti","Endeudamiento",0.48825,0.39008,39.1,1
+"fi","Endeudamiento",0.09675,0.035358,33.7,1
+"tl","Endeudamiento",0.90764,0.58061,37.7,1
+"fl","Endeudamiento",0.16406,0.026147,30.3,1
+"gm","Rentabilidad",0.33009,0.3536,46,1
+"om_c","Rentabilidad",0.083624,0.073788,49.9,0
+"nm","Rentabilidad",0.040581,0.0374,50.8,0
+"re","Rentabilidad",0.074042,0.047849,46.1,1
+"ra","Rentabilidad",0.031993,0.024468,50.1,0
+"ar","Eficiencia",80.56,86.296,49.7,1
+"it","Eficiencia",49.172,51.454,49.9,1
+"st_c","Eficiencia",87.978,87.52,46.6,0
+"x1","Altman Z'",0.16632,0.25794,64.5,1
+"x2","Altman Z'",0.23597,0.3096,57.9,1
+"x3","Altman Z'",0.064736,0.050462,49.3,0
+"x4","Altman Z'",1.0479,1.5626,60.3,1
+"x5","Altman Z'",0.86667,0.70461,48.6,1
+"z","Altman Z'",2.5601,2.8258,57.9,1

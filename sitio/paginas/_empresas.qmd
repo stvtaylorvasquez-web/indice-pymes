@@ -1,0 +1,157 @@
+# Empresas
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Ficha por empresa", "Busque una empresa y compárela con su sector",
+  html`Escriba al menos tres letras del nombre o del NIT. La ficha muestra la trayectoria del Z' y de los indicadores
+  de la empresa entre ${anioMin} y ${anioMax}, frente a la mediana de su sector en todo el país.`)
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Buscar"
+{
+  const chip = (d) => { const b = html`<button class="chip-empresa">${d.razon_social}<small>${nomSector.get(d.ciiu_seccion) ?? ""} · ${nomDepto(d.departamento)}</small></button>`
+    b.onclick = () => fijar(viewof buscarFicha, d.razon_social); return b }
+  let lista, titulo
+  if (empresaFicha) { lista = []; titulo = "" }
+  else if (coincidencias.length) { lista = coincidencias; titulo = `${coincidencias.length === 12 ? "Primeras 12 coincidencias" : `${coincidencias.length} coincidencias`}: elija una` }
+  else if ((buscarFicha ?? "").trim().length >= 3) { lista = []; titulo = "No se encontró ninguna empresa con ese texto." }
+  else {
+    const ids = Array.from(new Set(sel.map(d => d.nit)))
+    const paso = Math.max(1, Math.floor(ids.length / 6))
+    lista = ids.filter((_, i) => i % paso === 0).slice(0, 6).map(n => empresas.find(e => e.nit === n)).filter(Boolean)
+    titulo = `Ejemplos${ambito ? ambito : ""}:`
+  }
+  const limpiar = html`<button class="btn-limpiar" style="width:auto;padding:.35rem .9rem">✕ Limpiar búsqueda</button>`
+  limpiar.onclick = () => fijar(viewof buscarFicha, "")
+  return html`<div class="controles-fila">${viewof buscarFicha}${empresaFicha ? limpiar : ""}</div>
+    ${titulo ? html`<div class="subtitulo">${titulo}</div>` : ""}
+    <div class="chips-empresas">${lista.map(chip)}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  if (!empresaFicha || !filasFicha.length) return html`<div class="ficha-vacia">Elija una empresa para ver su ficha.</div>`
+  const ult = filasFicha.at(-1)
+  const zona = ZONAS.find(z => z.k === ult.zona)
+  const al = alerta.find(d => d.nit === empresaFicha.nit)
+  const nivel = al ? NIVELES[al.nivel - 1] : null
+  const enDistress = filasFicha.filter(d => d.zona === "D").length
+  return html`<div class="ficha">
+    <div class="ficha-id">
+      <div class="kicker">NIT ${empresaFicha.nit} · ${empresaFicha.ciiu_cod ?? ""}</div>
+      <h2>${empresaFicha.razon_social}</h2>
+      <p>${empresaFicha.ciiu_desc ?? ""}<br>${nomSector.get(ult.sec) ?? ""} · ${nomDepto(ult.dep)}</p>
+    </div>
+    <div class="ficha-datos-clave">
+      <div><span>Zona del Z' en ${ult.anio}</span><b style="color:${zona?.color ?? "#14213D"}">● ${zona?.nombre ?? "Sin dato"}</b></div>
+      <div><span>Z' de Altman ${ult.anio}</span><b>${Number.isFinite(ult.z) ? fDec(ult.z) : "–"}</b></div>
+      <div><span>Años en Distress (de ${filasFicha.length})</span><b>${enDistress}</b></div>
+      ${meta.alerta_por_empresa ? html`<div><span>Alerta ${anioMax + 1}</span>${al ? html`<b><span class="nivel" style="--c:${nivel.color}">${nivel.nombre}</span> · ${fPct(al.prob)}</b>` : html`<b class="tenue">No aplica (ya en Distress)</b>`}</div>` : ""}
+    </div>
+  </div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Trayectoria del Z' frente a su sector"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const sec = filasFicha.at(-1).sec
+  const medSec = Array.from(d3.group(datos.filter(d => d.sec === sec), d => d.anio), ([a, r]) => ({anio: a, v: d3.median(r, d => d.z), serie: `Mediana ${nomSector.get(sec)}`}))
+  const medPais = Array.from(d3.group(datos, d => d.anio), ([a, r]) => ({anio: a, v: d3.median(r, d => d.z), serie: "Mediana país"}))
+  const emp = filasFicha.filter(d => Number.isFinite(d.z)).map(d => ({anio: d.anio, v: d.z, zona: d.zona, serie: "Empresa"}))
+  const todos = [...emp, ...medSec, ...medPais].sort((a, b) => a.anio - b.anio)
+  const yMin = Math.min(-0.5, d3.min(todos, d => d.v)), yMax = Math.max(4, d3.max(todos, d => d.v))
+  const lo = Math.max(yMin, -3), hi = Math.min(yMax, 10)
+  const series = ["Empresa", `Mediana ${nomSector.get(sec)}`, "Mediana país"]
+  const plot = Plot.plot({
+    width: anchoCompleto, height: 340, marginLeft: 44, marginRight: 150, style: estilo,
+    x: {label: null, tickFormat: d => String(d), ticks: anios.length},
+    y: {label: "↑ Z' de Altman", domain: [lo, hi], grid: true, clamp: true, tickFormat: d => loc.format(",")(d)},
+    color: {domain: series, range: ["#14213D", "#2C5697", "#A9AEBA"]},
+    marks: [
+      Plot.rectY([{y1: lo, y2: 1.23}], {x1: anioMin - 0.4, x2: anioMax + 0.4, y1: "y1", y2: "y2", fill: "#D03B3B", fillOpacity: 0.07}),
+      Plot.rectY([{y1: 1.23, y2: 2.9}], {x1: anioMin - 0.4, x2: anioMax + 0.4, y1: "y1", y2: "y2", fill: "#A9AEBA", fillOpacity: 0.1}),
+      Plot.text([{y: (lo + 1.23) / 2, t: "Distress"}, {y: 2.06, t: "Gris"}, {y: Math.min(hi - 0.3, 3.4), t: "Segura"}],
+        {x: anioMin - 0.35, y: "y", text: "t", textAnchor: "start", fill: "#7A8294", fontSize: 10.5, fontWeight: 600}),
+      Plot.lineY(todos.filter(d => d.serie !== "Empresa"), {x: "anio", y: "v", stroke: "serie", strokeWidth: 2, strokeDasharray: d => d.serie === "Mediana país" ? "4 3" : null, curve: "monotone-x"}),
+      Plot.lineY(emp, {x: "anio", y: "v", stroke: "#14213D", strokeWidth: 3}),
+      Plot.dot(emp, {x: "anio", y: "v", r: 5, fill: d => colZona.get(d.zona) ?? "#14213D", stroke: "white", strokeWidth: 1.5}),
+      Plot.text(series.slice(0, 2).map(s => todos.filter(d => d.serie === s).at(-1)).filter(Boolean),
+        {x: "anio", y: "v", text: d => `${d.serie === "Empresa" ? "Empresa" : d.serie} ${fDec(d.v)}`, dx: 10, textAnchor: "start", fill: "serie", fontWeight: 600, fontSize: 11}),
+      Plot.tip(todos, Plot.pointer({x: "anio", y: "v", fontSize: 12, title: d => `${d.serie}\n${d.anio}: Z' ${fDec(d.v)}`}))
+    ]
+  })
+  return conPNG(html`${leyenda([{nombre: "Empresa", color: "#14213D"}, {nombre: `Mediana ${nomSector.get(sec)}`, color: "#2C5697"}, {nombre: "Mediana país (punteada)", color: "#A9AEBA"}])}<div class="subtitulo">Cada punto de la empresa está coloreado según su zona ese año. Franjas: zona Distress (rojo) y Gris.
+    Valores extremos recortados al borde del gráfico.</div>${plot}`, "trayectoria_z_" + empresaFicha.nit)
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Indicadores de la empresa frente a la mediana de su sector"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const sec = filasFicha.at(-1).sec
+  const porA = d3.group(datos.filter(d => d.sec === sec), d => d.anio)
+  const lista = ["cr", "ti", "om", "ra", "re", "ar"].map(k => indPorK.get(k))
+  const panel = (ind) => {
+    const e = filasFicha.filter(d => Number.isFinite(d[ind.k])).map(d => ({anio: d.anio, v: d[ind.k], serie: "Empresa"}))
+    const s = anios.map(a => ({anio: a, v: d3.median(porA.get(a) ?? [], d => d[ind.k]), serie: "Sector"})).filter(d => Number.isFinite(d.v))
+    const todos = [...e, ...s]
+    const ue = e.at(-1), us = s.at(-1)
+    const mejor = ue && us ? ((ue.v > us.v) !== ind.mejorSiBaja) : null
+    // Rango robusto para que un valor extremo no aplaste el gráfico
+    const vals = todos.map(d => d.v).sort((a, b) => a - b)
+    const lo = d3.quantile(vals, 0.02), hi = d3.quantile(vals, 0.98)
+    return html`<div><h4>${ind.nombre}</h4>
+      <div class="ult">${ue ? ind.fmt(ue.v) : "–"} <small>empresa ${ue?.anio ?? ""} · sector ${us ? ind.fmt(us.v) : "–"}</small></div>
+      ${mejor === null ? "" : html`<div class="comparacion ${mejor ? "bien" : "mal"}">${mejor ? "▲ Mejor" : "▼ Peor"} que la mediana de su sector</div>`}
+      ${Plot.plot({
+        width: anchoTercio, height: 160, marginLeft: 46, marginRight: 8, marginTop: 8, marginBottom: 22,
+        style: Object.assign({}, estilo, {fontSize: "10.5px", color: "#7A8294"}),
+        x: {label: null, tickFormat: d => "’" + String(d).slice(2), ticks: anios.filter((a, i) => i % 3 === 0), domain: d3.extent(anios)},
+        y: {label: null, grid: true, ticks: 3, nice: true, domain: [lo, hi], clamp: true, tickFormat: ind.pct ? fPct0 : (d => loc.format(",.1f")(d))},
+        color: {domain: ["Empresa", "Sector"], range: ["#14213D", "#2C5697"]},
+        marks: [
+          Plot.lineY(s, {x: "anio", y: "v", stroke: "#2C5697", strokeWidth: 2, strokeDasharray: "4 3"}),
+          Plot.lineY(e, {x: "anio", y: "v", stroke: "#14213D", strokeWidth: 2.5}),
+          Plot.dot(e, {x: "anio", y: "v", r: 2.8, fill: "#14213D"}),
+          Plot.tip(todos, Plot.pointer({x: "anio", y: "v", fontSize: 12, title: d => `${d.serie} ${d.anio}\n${ind.fmt(d.v)}`}))
+        ]
+      })}</div>`
+  }
+  return html`${leyenda([{nombre: "Empresa", color: "#14213D"}, {nombre: `Mediana del sector ${nomSector.get(sec)} (línea punteada)`, color: "#2C5697"}])}
+    <div class="multiples tres">${lista.map(panel)}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Datos año a año"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const filas = filasFicha.map(d => ({Año: d.anio, Zona: nomZona.get(d.zona) ?? "–", "Z'": d.z, "Razón corriente": d.cr, Endeudamiento: d.ti,
+    "Margen op.": d.om, "Margen neto": d.nm, ROA: d.ra, ROE: d.re, "Días cartera": d.ar,
+    Cuadrante: d.cuad ? CUADS[d.cuad - 1].nombre : "–"}))
+  const num = x => Number.isFinite(x) ? x : null
+  return html`${Inputs.table(filas, {format: {Año: String, "Z'": x => num(x) == null ? "–" : fDec(x), "Razón corriente": x => num(x) == null ? "–" : fDec(x),
+      Endeudamiento: x => num(x) == null ? "–" : fPct(x), "Margen op.": x => num(x) == null ? "–" : fPct(x), "Margen neto": x => num(x) == null ? "–" : fPct(x),
+      ROA: x => num(x) == null ? "–" : fPct(x), ROE: x => num(x) == null ? "–" : fPct(x), "Días cartera": x => num(x) == null ? "–" : fEnt(Math.round(x))},
+    layout: "auto", rows: 11})}
+    <div class="acciones">${botonesDescarga(() => filasFicha.map(d => ({nit: d.nit, razon_social: empresaFicha.razon_social, ...d})), "ficha_" + empresaFicha.nit)}</div>`
+}
+```
