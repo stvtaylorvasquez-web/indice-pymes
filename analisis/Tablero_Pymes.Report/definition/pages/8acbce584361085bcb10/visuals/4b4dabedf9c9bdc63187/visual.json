@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "4b4dabedf9c9bdc63187",
+  "position": {
+    "x": 776,
+    "y": 186,
+    "z": 5000,
+    "height": 130,
+    "width": 360,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_panel"
+                    }
+                  },
+                  "Property": "Z mediano"
+                }
+              },
+              "queryRef": "fact_panel.Z mediano",
+              "nativeQueryRef": "Z mediano",
+              "displayName": "Z' mediano"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,68 @@
+# Metodología
+
+## Row {height="auto"}
+
+::: {.card title="Fuente de los datos"}
+Estados financieros que las sociedades reportan a la **Superintendencia de Sociedades** bajo el marco
+NIIF para Pymes (grupo 2), con corte al 31 de diciembre de 2016 a 2025. El panel es **balanceado**: incluye las
+7.772 sociedades que reportaron los diez años (77.720 observaciones empresa-año).
+
+**Importante:** "Pymes" se refiere al marco contable NIIF para Pymes, no al tamaño legal de la empresa
+(Decreto 957 de 2019). Una clasificación por tamaño según ingresos está en desarrollo.
+
+El mapa usa el Marco Geoestadístico Nacional 2018 del DANE.
+:::
+
+::: {.card title="Z' de Altman (empresas no cotizadas)"}
+::: {.formula}
+Z' = 0,717·X1 + 0,847·X2 + 3,107·X3 + 0,420·X4 + 0,998·X5
+:::
+
+| Variable | Definición |
+|---|---|
+| X1 | (Activo corriente − Pasivo corriente) / Activo total |
+| X2 | Utilidades acumuladas / Activo total |
+| X3 | Utilidad operacional / Activo total |
+| X4 | Patrimonio / Pasivo total |
+| X5 | Ventas / Activo total |
+
+Zonas: **Distress** si Z' < 1,23; **Gris** entre 1,23 y 2,9; **Segura** si Z' ≥ 2,9.
+:::
+
+## Row {height="auto"}
+
+::: {.card title="Indicadores"}
+| Indicador | Fórmula |
+|---|---|
+| Razón corriente | Activo corriente / Pasivo corriente |
+| Endeudamiento total | Pasivo total / Activo total |
+| Margen operacional | Utilidad operacional / Ingresos ordinarios |
+| Margen neto | Utilidad neta / Ingresos ordinarios |
+| ROA | Utilidad neta / Activo total |
+| ROE | Utilidad neta / Patrimonio |
+| Días de cartera | Cuentas por cobrar × 365 / Ingresos ordinarios |
+
+Los ratios se recalculan desde el estado de situación financiera y el estado de resultados, y se validan contra la base
+original. Las divisiones por cero quedan como dato faltante. Las cifras del tablero son medianas.
+:::
+
+::: {.card title="Cuadrantes y alerta temprana"}
+**Cuadrantes de liquidez y endeudamiento.** Liquidez baja: razón corriente menor que 1. Deuda alta: endeudamiento
+total mayor que 70%. Crítico = ambas; Tensión de liquidez = solo liquidez baja; Apalancada con liquidez = solo deuda alta;
+Holgada = ninguna. Los intervalos de confianza del 95% usan el método de Wilson.
+
+**Alerta temprana.** Modelo logit de la probabilidad de entrar a zona Distress el año siguiente, para empresas que hoy
+están en zona Gris o Segura. Variables: Z', indicadores que no forman parte del Z', tamaño, crecimiento y sector.
+Se estimó con 2017–2020 y se validó con 2021–2024 (AUC 0,855). Niveles: Baja < 2%, Moderada 2–5%, Alta 5–15%, Muy alta > 15%.
+:::
+
+## Row {height="auto"}
+
+::: {.card title="Limitaciones"}
+- **Sesgo de supervivencia:** las empresas que dejaron de reportar o se liquidaron no están en el panel, por lo que la proporción en Distress puede estar subestimada.
+- **Distress no es quiebra:** es una señal contable de deterioro según el Z'. La base no incluye eventos de insolvencia.
+- **Calibración:** los coeficientes del Z' fueron estimados por Altman para empresas de EE. UU.; su ajuste a Colombia es una línea de trabajo del semillero.
+- **Alerta:** es una probabilidad estadística útil para ordenar empresas por riesgo, no una calificación crediticia.
+
+**Cómo citar:** Semillero de Investigación Pensamiento y Praxis, Pontificia Universidad Javeriana Cali (2026). *Salud Financiera PYME · Colombia 2016–2025*.
+:::

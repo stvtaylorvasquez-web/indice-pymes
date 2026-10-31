@@ -1,0 +1,376 @@
+---
+title: "Salud Financiera PYME · Colombia"
+format:
+  dashboard:
+    theme: [cosmo, estilos/javeriana.scss]
+    scrolling: true
+    nav-buttons:
+      - icon: github
+        href: https://github.com/stvtaylorvasquez-web/indice-pymes
+---
+
+<!--
+  ESTRUCTURA DEL TABLERO
+  - Este archivo: filtros globales (barra izquierda), carga de datos y funciones compartidas.
+  - Cada pestaña vive en su propio archivo dentro de paginas/ y se incluye al final.
+  - Para agregar una pestaña: crear paginas/_nueva.qmd (empieza con "# Nombre") y agregar su línea include.
+-->
+
+# {.sidebar width="270px"}
+
+```{ojs}
+//| output: false
+// ===================== DATOS (generados por analisis/06_exportar_web.R) =====================
+datos    = FileAttachment("datos/panel.csv").csv({typed: true})
+sectores = FileAttachment("datos/sectores.csv").csv()
+meta     = FileAttachment("datos/meta.json").json()
+geo      = FileAttachment("datos/departamentos.geojson").json()
+alerta   = FileAttachment("datos/alerta.csv").csv({typed: true})
+modelos  = FileAttachment("datos/modelos.csv").csv({typed: true})
+descriptiva = FileAttachment("datos/descriptiva.csv").csv({typed: true})
+diccionario = FileAttachment("datos/diccionario.csv").csv()
+empresas = FileAttachment("datos/empresas.csv").csv({typed: true})
+
+// ===================== FORMATOS (estilo colombiano: coma decimal) =====================
+loc  = d3.formatLocale({decimal: ",", thousands: ".", grouping: [3], currency: ["$", ""]})
+fEnt = loc.format(",d")
+fPct = loc.format(".1%")
+fPct0 = loc.format(".0%")
+fDec = loc.format(",.2f")
+fDec1 = loc.format(",.1f")
+fPp  = (x) => (x > 0 ? "+" : x < 0 ? "−" : "±") + loc.format(".1f")(Math.abs(x * 100)) + " pp"
+fDif = (x, f) => (x > 0 ? "+" : x < 0 ? "−" : "±") + f(Math.abs(x))
+
+// ===================== CATÁLOGOS =====================
+nomSector = new Map(sectores.map(d => [d.sec, d.sector]))
+tildes = new Map([["BOGOTA D.C.", "Bogotá D.C."], ["ATLANTICO", "Atlántico"], ["BOLIVAR", "Bolívar"],
+  ["NARINO", "Nariño"], ["BOYACA", "Boyacá"], ["CORDOBA", "Córdoba"], ["QUINDIO", "Quindío"],
+  ["CAQUETA", "Caquetá"], ["CHOCO", "Chocó"], ["VALLE", "Valle del Cauca"], ["GUAINIA", "Guainía"],
+  ["VAUPES", "Vaupés"], ["SAN ANDRES Y PROVIDENCIA", "San Andrés y Providencia"]])
+nomDepto = (d) => d == null ? "" : tildes.get(d) ?? d.toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase()).replace(" De ", " de ")
+nomEmpresa = new Map(empresas.map(d => [d.nit, d.razon_social]))
+
+anios = Array.from(new Set(datos.map(d => d.anio))).sort((a, b) => a - b)
+anioMax = anios[anios.length - 1]
+anioMin = anios[0]
+
+// Colores: zonas del Z' (divergente rojo - gris - azul institucional)
+ZONAS = [
+  {k: "D", nombre: "Distress", color: "#D03B3B", rango: "Z' < 1,23"},
+  {k: "G", nombre: "Gris",     color: "#A9AEBA", rango: "1,23 a 2,9"},
+  {k: "S", nombre: "Segura",   color: "#2C5697", rango: "Z' ≥ 2,9"}
+]
+nomZona = new Map(ZONAS.map(z => [z.k, z.nombre]))
+colZona = new Map(ZONAS.map(z => [z.k, z.color]))
+
+// Cuadrantes de liquidez y endeudamiento (script 03)
+CUADS = [
+  {k: 1, nombre: "Crítico", detalle: "baja liquidez y alta deuda", color: "#B42318"},
+  {k: 2, nombre: "Tensión de liquidez", detalle: "baja liquidez, deuda moderada", color: "#E8836F"},
+  {k: 3, nombre: "Apalancada con liquidez", detalle: "alta deuda, liquidez suficiente", color: "#7FA3D6"},
+  {k: 4, nombre: "Holgada", detalle: "liquidez suficiente y deuda moderada", color: "#2C5697"}
+]
+
+// Niveles de alerta 2026 (script 04)
+NIVELES = [
+  {k: 1, nombre: "Baja", rango: "< 2%", color: "#2C5697"},
+  {k: 2, nombre: "Moderada", rango: "2% a 5%", color: "#D9A400"},
+  {k: 3, nombre: "Alta", rango: "5% a 15%", color: "#E8703A"},
+  {k: 4, nombre: "Muy alta", rango: "> 15%", color: "#B42318"}
+]
+
+// Indicadores disponibles en panel.csv
+INDS = [
+  {k: "cr", nombre: "Razón corriente", corto: "Liquidez", fmt: x => fDec(x) + "×", pct: false, mejorSiBaja: false},
+  {k: "ti", nombre: "Endeudamiento total", corto: "Endeudamiento", fmt: fPct, pct: true, mejorSiBaja: true},
+  {k: "om", nombre: "Margen operacional", corto: "Margen op.", fmt: fPct, pct: true, mejorSiBaja: false},
+  {k: "nm", nombre: "Margen neto", corto: "Margen neto", fmt: fPct, pct: true, mejorSiBaja: false},
+  {k: "ra", nombre: "ROA (rentabilidad del activo)", corto: "ROA", fmt: fPct, pct: true, mejorSiBaja: false},
+  {k: "re", nombre: "ROE (rentabilidad del patrimonio)", corto: "ROE", fmt: fPct, pct: true, mejorSiBaja: false},
+  {k: "ar", nombre: "Días de cartera", corto: "Días cartera", fmt: x => fEnt(Math.round(x)) + " días", pct: false, mejorSiBaja: true},
+  {k: "z",  nombre: "Z' de Altman", corto: "Z'", fmt: fDec, pct: false, mejorSiBaja: false}
+]
+indPorK = new Map(INDS.map(d => [d.k, d]))
+
+// ===================== FUNCIONES COMPARTIDAS =====================
+function resumen(rows) {
+  const conZona = rows.filter(d => d.zona)
+  const n = new Set(rows.map(d => d.nit)).size
+  const r = {n, filas: rows.length,
+    dist: conZona.length ? conZona.filter(d => d.zona === "D").length / conZona.length : NaN,
+    gris: conZona.length ? conZona.filter(d => d.zona === "G").length / conZona.length : NaN,
+    segura: conZona.length ? conZona.filter(d => d.zona === "S").length / conZona.length : NaN,
+    pn: rows.length ? d3.mean(rows, d => d.pn) : NaN}
+  for (const i of INDS) r[i.k] = d3.median(rows, d => d[i.k])
+  return r
+}
+// Cambia un filtro de la barra lateral desde un gráfico (clic en mapa, barra o tabla)
+function fijar(entrada, valor) {
+  entrada.value = valor
+  entrada.dispatchEvent(new Event("input", {bubbles: true}))
+}
+// Intervalo de confianza de Wilson al 95% para una proporción
+function wilson(k, n) {
+  if (!n) return [NaN, NaN]
+  const z = 1.96, p = k / n, den = 1 + z * z / n
+  const c = (p + z * z / (2 * n)) / den, m = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den
+  return [c - m, c + m]
+}
+// Siguiente año de cada empresa: devuelve Map nit -> Map(anio -> fila)
+function porEmpresa(rows) {
+  const m = new Map()
+  for (const d of rows) { if (!m.has(d.nit)) m.set(d.nit, new Map()); m.get(d.nit).set(d.anio, d) }
+  return m
+}
+// Botón "PNG" sobre un gráfico
+function conPNG(nodo, nombre) {
+  const btn = html`<button class="btn-png" title="Descargar el gráfico como imagen">⤓ PNG</button>`
+  btn.onclick = async () => {
+    const svgs = [...nodo.querySelectorAll("svg")]
+    const svg = svgs.sort((a, b) => b.getBoundingClientRect().width * b.getBoundingClientRect().height
+                                  - a.getBoundingClientRect().width * a.getBoundingClientRect().height)[0]
+    if (!svg) return
+    const vb = svg.viewBox && svg.viewBox.baseVal
+    const w = (vb && vb.width) || svg.clientWidth, h = (vb && vb.height) || svg.clientHeight
+    const copia = svg.cloneNode(true)
+    copia.setAttribute("xmlns", "http://www.w3.org/2000/svg"); copia.setAttribute("width", w); copia.setAttribute("height", h)
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copia)], {type: "image/svg+xml"}))
+    const img = new Image()
+    await new Promise((ok, err) => { img.onload = ok; img.onerror = err; img.src = url })
+    const c = document.createElement("canvas"); c.width = w * 2; c.height = h * 2
+    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height)
+    ctx.drawImage(img, 0, 0, c.width, c.height)
+    c.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = nombre + ".png"; a.click() })
+  }
+  return html`<div class="con-png">${btn}${nodo}</div>`
+}
+// Mapa interactivo: tooltip y clic sobre cada departamento.
+// Requiere que las dos primeras marcas del mapa sean Plot.geo(sinDatos) y Plot.geo(conDatos), en ese orden.
+function activarMapa(plot, conDatos, sinDatos, texto, alClic) {
+  const tip = html`<div class="tip-mapa"></div>`
+  const caja = html`<div class="caja-mapa">${plot}${tip}</div>`
+  const capas = plot.querySelectorAll('g[aria-label="geo"]')
+  const enlazar = (k, feats, clic) => {
+    const g = capas[k]
+    if (!g) return
+    g.querySelectorAll("path").forEach((p, i) => {
+      const f = feats[i]
+      if (!f) return
+      p.addEventListener("pointerenter", () => { p.classList.add("activo"); tip.replaceChildren(texto(f)); tip.style.display = "block" })
+      p.addEventListener("pointermove", (e) => { const r = caja.getBoundingClientRect()
+        tip.style.left = Math.min(e.clientX - r.left + 14, r.width - 220) + "px"; tip.style.top = (e.clientY - r.top + 14) + "px" })
+      p.addEventListener("pointerleave", () => { p.classList.remove("activo"); tip.style.display = "none" })
+      if (clic) { p.style.cursor = "pointer"; p.addEventListener("click", () => alClic(f)) }
+    })
+  }
+  enlazar(1, conDatos, true)
+  enlazar(0, sinDatos, false)
+  return caja
+}
+// Encabezado de cada pestaña
+encabezado = (kicker, titulo, texto) => html`<div class="encabezado">
+  <div class="kicker">${kicker}</div><h2>${titulo}</h2>${texto ? html`<p>${texto}</p>` : ""}</div>`
+// Leyenda en HTML (identidad nunca solo por color: siempre con nombre)
+leyenda = (items) => html`<div class="leyenda">${items.map(z => html`<span><i style="background:${z.color}"></i>${z.nombre}${z.rango ? html` <small>(${z.rango})</small>` : ""}</span>`)}</div>`
+// Descarga de una tabla como CSV o Excel (Excel se carga solo cuando se pide)
+// Guarda un libro de Excel con nombre de archivo (funciona en todos los navegadores)
+function guardarLibro(XLSX, libro, nombre) {
+  const datosXlsx = XLSX.write(libro, {bookType: "xlsx", type: "array"})
+  const a = document.createElement("a")
+  a.href = URL.createObjectURL(new Blob([datosXlsx], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}))
+  a.download = nombre + ".xlsx"; document.body.appendChild(a); a.click(); a.remove()
+}
+async function descargarTabla(filas, nombre, formato) {
+  if (formato === "xlsx") {
+    const XLSX = await require("xlsx@0.18.5/dist/xlsx.full.min.js")
+    const libro = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(filas), "datos")
+    guardarLibro(XLSX, libro, nombre)
+  } else {
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(new Blob(["﻿" + d3.csvFormat(filas)], {type: "text/csv;charset=utf-8"}))
+    a.download = nombre + ".csv"; a.click()
+  }
+}
+botonesDescarga = (obtener, nombre) => {
+  const b1 = html`<button class="btn-mini">⤓ CSV</button>`, b2 = html`<button class="btn-mini">⤓ Excel</button>`
+  b1.onclick = () => descargarTabla(obtener(), nombre, "csv")
+  b2.onclick = () => descargarTabla(obtener(), nombre, "xlsx")
+  return html`<span class="descargas-mini">${b1}${b2}</span>`
+}
+```
+
+```{ojs}
+html`<div class="filtro-titulo">Explorar</div>`
+```
+
+```{ojs}
+viewof anio = Inputs.select(
+  new Map([[`Todos (${anioMin}–${anioMax})`, "*"], ...anios.slice().reverse().map(a => [String(a), a])]),
+  {label: "Año de corte", value: anioMax})
+```
+
+```{ojs}
+viewof sector = Inputs.select(
+  new Map([["Todos los sectores", "*"],
+    ...Array.from(new Set(datos.map(d => d.sec))).filter(s => nomSector.has(s))
+       .sort((a, b) => nomSector.get(a).localeCompare(nomSector.get(b), "es"))
+       .map(s => [`${nomSector.get(s)} (${s})`, s])]),
+  {label: "Sector CIIU"})
+```
+
+```{ojs}
+viewof depto = Inputs.select(
+  new Map([["Todo el país", "*"],
+    ...d3.groupSort(datos, v => -v.length, d => d.dep).map(d => [nomDepto(d), d])]),
+  {label: "Departamento"})
+```
+
+```{ojs}
+{
+  const b = html`<button class="btn-limpiar">↺ Restablecer filtros</button>`
+  b.onclick = () => { fijar(viewof anio, anioMax); fijar(viewof sector, "*"); fijar(viewof depto, "*") }
+  const activos = [anio === "*" ? null : `Año ${anio}`, sector === "*" ? null : nomSector.get(sector),
+                   depto === "*" ? null : nomDepto(depto)].filter(Boolean)
+  return html`<div class="filtros-activos">${activos.length ? activos.map(a => html`<span class="chip">${a}</span>`) : html`<span class="chip chip-vacio">Todo el país · todos los sectores</span>`}</div>
+  ${b}
+  <div class="tip-lateral">💡 Haga clic en un departamento del mapa o en una barra de sector para filtrar todo el tablero.</div>
+  <div class="nota-lateral">
+    <b>Semillero de Investigación Pensamiento y Praxis</b> · Pontificia Universidad Javeriana Cali.<br><br>
+    Panel de <b>${fEnt(meta.empresas)}</b> sociedades que reportaron a la Superintendencia de Sociedades
+    todos los años entre ${meta.anio_min} y ${meta.anio_max} (NIIF Pymes, corte 31 de diciembre).<br><br>
+    Datos actualizados: <b>${meta.actualizado}</b>.
+  </div>`
+}
+```
+
+```{ojs}
+//| output: false
+// ===================== FILTROS APLICADOS =====================
+base      = datos.filter(d => (sector === "*" || d.sec === sector) && (depto === "*" || d.dep === depto))
+```
+
+```{ojs}
+//| output: false
+sel       = anio === "*" ? base : base.filter(d => d.anio === anio)
+```
+
+```{ojs}
+//| output: false
+selSinDep = datos.filter(d => (anio === "*" || d.anio === anio) && (sector === "*" || d.sec === sector))
+```
+
+```{ojs}
+//| output: false
+selSinSec = datos.filter(d => (anio === "*" || d.anio === anio) && (depto === "*" || d.dep === depto))
+```
+
+```{ojs}
+//| output: false
+porAnio = Array.from(d3.group(base, d => d.anio), ([a, rows]) => ({anio: a, ...resumen(rows)}))
+  .sort((a, b) => a.anio - b.anio)
+```
+
+```{ojs}
+//| output: false
+actual = resumen(sel)
+```
+
+```{ojs}
+//| output: false
+previo = (anio !== "*" && anio > anioMin) ? porAnio.find(d => d.anio === anio - 1) : null
+```
+
+```{ojs}
+//| output: false
+foco = anio === "*" ? anioMax : anio
+```
+
+```{ojs}
+//| output: false
+ambito = [sector === "*" ? "" : ` del sector ${nomSector.get(sector)}`,
+          depto === "*" ? "" : ` en ${nomDepto(depto)}`].join("")
+```
+
+```{ojs}
+//| output: false
+textoFiltro = [anio === "*" ? `${anioMin}–${anioMax}` : String(anio),
+               sector === "*" ? "todos los sectores" : nomSector.get(sector),
+               depto === "*" ? "todo el país" : nomDepto(depto)].join(" · ")
+// Anchos de gráficos según la pantalla
+```
+
+```{ojs}
+//| output: false
+anchoUtil = width > 992 ? width - 300 : width - 24
+```
+
+```{ojs}
+//| output: false
+anchoMedio = width > 992 ? Math.floor(anchoUtil / 2) - 48 : anchoUtil - 36
+```
+
+```{ojs}
+//| output: false
+anchoCompleto = anchoUtil - 48
+// Controles locales de algunas tarjetas (se muestran dentro de su tarjeta)
+```
+
+```{ojs}
+//| output: false
+viewof metricaMapa = Inputs.radio(
+  new Map([["% en Distress", "dist"], ["Z' mediano", "z"], ["Endeudamiento", "ti"], ["Empresas", "n"]]),
+  {value: "dist"})
+```
+
+```{ojs}
+//| output: false
+viewof zonaInd = Inputs.radio(new Map([["Todas las zonas", "*"], ["Distress", "D"], ["Gris", "G"], ["Segura", "S"]]),
+  {value: "*", label: "Zona del Z'"})
+```
+
+```{ojs}
+//| output: false
+viewof indSel = Inputs.select(new Map(INDS.map(d => [d.nombre, d.k])), {value: "ra", label: "Indicador"})
+```
+
+```{ojs}
+//| output: false
+viewof grupoDesc = Inputs.radio(new Map([["Todos", "*"], ["Liquidez", "Liquidez"], ["Endeudamiento", "Endeudamiento"],
+  ["Rentabilidad", "Rentabilidad"], ["Eficiencia", "Eficiencia"], ["Altman Z'", "Altman Z'"]]), {value: "*", label: "Grupo"})
+```
+
+```{ojs}
+//| output: false
+viewof nivelSel = Inputs.checkbox(new Map(NIVELES.map(n => [`${n.nombre} (${n.rango})`, n.k])), {value: [3, 4], label: "Nivel de alerta"})
+```
+
+```{ojs}
+//| output: false
+viewof buscar = Inputs.text({placeholder: "Buscar por nombre o NIT…", label: "Buscar empresa"})
+```
+
+```{ojs}
+//| output: false
+viewof vistaZ = Inputs.radio(new Map([["% en Distress hoy", "hoy"], ["Probabilidad de caer a Distress el año siguiente", "t1"]]), {value: "hoy"})
+```
+
+```{ojs}
+//| output: false
+estilo = Object.assign({}, {fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#4A5468", overflow: "visible"})
+```
+
+
+{{< include paginas/_panorama.qmd >}}
+
+{{< include paginas/_indicadores.qmd >}}
+
+{{< include paginas/_liquidez.qmd >}}
+
+{{< include paginas/_zscore.qmd >}}
+
+{{< include paginas/_alerta.qmd >}}
+
+{{< include paginas/_datos.qmd >}}
+
+{{< include paginas/_metodologia.qmd >}}

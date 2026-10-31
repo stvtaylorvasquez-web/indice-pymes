@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "544aa43076f4981d17ea",
+  "position": {
+    "x": 1660,
+    "y": 96,
+    "z": 6000,
+    "height": 130,
+    "width": 240,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "m_e4_alerta_temprana"
+                    }
+                  },
+                  "Property": "Prob. promedio de caer"
+                }
+              },
+              "queryRef": "m_e4_alerta_temprana.Prob. promedio de caer",
+              "nativeQueryRef": "Prob. promedio de caer",
+              "displayName": "Prob. promedio"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

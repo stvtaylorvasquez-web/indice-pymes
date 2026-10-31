@@ -1,0 +1,135 @@
+# Indicadores
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Indicadores financieros", "¿Cómo se comparan los sectores?",
+  html`Medianas por sector (robustas a valores extremos) para <b>${textoFiltro.split(" · ")[0]}</b>${depto === "*" ? "" : html` en <b>${nomDepto(depto)}</b>`}.
+  Haga clic en una fila de la tabla para filtrar todo el tablero por ese sector.`)
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Indicadores por sector (medianas)"
+{
+  const fuente = selSinSec.filter(d => zonaInd === "*" || d.zona === zonaInd)
+  const filas = Array.from(d3.group(fuente, d => d.sec), ([s, rows]) => {
+      const r = resumen(rows)
+      return {sec: s, Sector: nomSector.get(s) ?? s, Empresas: r.n, Distress: r.dist, PatNeg: r.pn,
+              Cartera: r.ar, Liquidez: r.cr, Deuda: r.ti, MargenOp: r.om, MargenNeto: r.nm, ROA: r.ra, ROE: r.re}
+    }).filter(d => d.Empresas >= 10).sort((a, b) => b.Empresas - a.Empresas)
+  const tot = resumen(fuente)
+  // Barras de calor dentro de cada celda: largo relativo al máximo de la columna
+  const ext = (k) => d3.extent(filas, d => d[k])
+  const celda = (k, fmt, color) => { const [a, b] = ext(k)
+    return (x) => { if (x == null || !Number.isFinite(x)) return "–"
+      const w = b > a ? Math.max(4, 100 * (x - Math.min(0, a)) / (b - Math.min(0, a))) : 50
+      return html`<div class="celda-barra"><i style="width:${w}%;background:${color}"></i><span>${fmt(x)}</span></div>` } }
+  const tabla = Inputs.table(filas, {
+    columns: ["Sector", "Empresas", "Distress", "PatNeg", "Liquidez", "Deuda", "MargenOp", "MargenNeto", "ROA", "ROE", "Cartera"],
+    header: {Distress: "% Distress", PatNeg: "% Patr. negativo", Liquidez: "Razón corriente", Deuda: "Endeudamiento",
+             MargenOp: "Margen op.", MargenNeto: "Margen neto", Cartera: "Días cartera"},
+    format: {Empresas: celda("Empresas", fEnt, "#DDE5F2"), Distress: celda("Distress", fPct, "#F6CFCB"),
+             PatNeg: celda("PatNeg", fPct, "#F6CFCB"), Liquidez: celda("Liquidez", fDec, "#DDE5F2"),
+             Deuda: celda("Deuda", fPct, "#FBE3C7"), MargenOp: celda("MargenOp", fPct, "#DDE5F2"),
+             MargenNeto: celda("MargenNeto", fPct, "#DDE5F2"), ROA: celda("ROA", fPct, "#DDE5F2"),
+             ROE: celda("ROE", fPct, "#DDE5F2"), Cartera: celda("Cartera", x => fEnt(Math.round(x)), "#FBE3C7")},
+    width: {Sector: 200}, layout: "auto", rows: 22, multiple: false,
+    value: filas.find(d => d.sec === sector), required: false, maxHeight: 640
+  })
+  tabla.addEventListener("input", () => { const v = tabla.value; fijar(viewof sector, v ? v.sec : "*") })
+  return html`${viewof zonaInd}
+    <div class="subtitulo">Total (${fEnt(tot.n)} empresas): ${fPct(tot.dist)} en Distress · razón corriente ${fDec(tot.cr)} ·
+      endeudamiento ${fPct(tot.ti)} · ROA ${fPct(tot.ra)} · ROE ${fPct(tot.re)}. Sectores con al menos 10 empresas; clic en un encabezado para ordenar.</div>
+    ${tabla}
+    <div class="acciones">${botonesDescarga(() => filas.map(({sec, ...r}) => ({seccion: sec, ...r})), "indicadores_por_sector")}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Evolución: sector seleccionado frente al total"
+{
+  const ind = indPorK.get(indSel)
+  const total = Array.from(d3.group(datos.filter(d => depto === "*" || d.dep === depto), d => d.anio),
+    ([a, rows]) => ({anio: a, serie: depto === "*" ? "Total país" : `Total ${nomDepto(depto)}`, v: d3.median(rows, d => d[indSel])}))
+  const sect = sector === "*" ? [] : porAnio.map(d => ({anio: d.anio, serie: nomSector.get(sector), v: d[indSel]}))
+  const filas = [...total, ...sect].filter(d => Number.isFinite(d.v)).sort((a, b) => a.anio - b.anio)
+  const series = Array.from(new Set(filas.map(d => d.serie)))
+  const colores = ["#7A8294", "#2C5697"]
+  const ult = series.map(s => filas.filter(d => d.serie === s).at(-1))
+  const plot = Plot.plot({
+    width: anchoMedio, height: 320, marginLeft: 50, marginRight: 120, style: estilo,
+    x: {label: null, tickFormat: d => String(d), ticks: anios.length},
+    y: {label: null, grid: true, ticks: 5, nice: true, tickFormat: ind.pct ? (d => loc.format(d3.extent(filas, f => f.v).reduce((x, y) => y - x) < 0.05 ? ".1%" : ".0%")(d)) : (d => loc.format(".1f")(d))},
+    color: {domain: series, range: colores},
+    marks: [
+      Plot.lineY(filas, {x: "anio", y: "v", stroke: "serie", strokeWidth: d => d.serie.startsWith("Total") ? 2 : 3, curve: "monotone-x"}),
+      Plot.dot(filas, {x: "anio", y: "v", fill: "serie", r: 3}),
+      Plot.text(ult, {x: "anio", y: "v", text: d => `${d.serie}  ${ind.fmt(d.v)}`, dx: 8, textAnchor: "start", fill: "serie", fontWeight: 600, fontSize: 11}),
+      Plot.ruleX([foco], {stroke: "#F8CD00", strokeWidth: 2, strokeOpacity: 0.8}),
+      Plot.tip(filas, Plot.pointer({x: "anio", y: "v", title: d => `${d.serie}\n${d.anio}: ${ind.fmt(d.v)}`, fontSize: 12}))
+    ]
+  })
+  return conPNG(html`${viewof indSel}
+    <div class="subtitulo">${sector === "*" ? "Elija un sector (barra lateral o tabla de arriba) para compararlo con el total." : `Mediana anual de ${ind.nombre.toLowerCase()}.`}</div>
+    ${plot}`, "evolucion_" + indSel)
+}
+```
+
+```{ojs}
+//| title: "Ranking de sectores en el indicador elegido"
+{
+  const ind = indPorK.get(indSel)
+  const filas = Array.from(d3.group(selSinSec, d => d.sec), ([s, rows]) => ({sec: s, sector: nomSector.get(s) ?? s,
+      n: new Set(rows.map(d => d.nit)).size, v: d3.median(rows, d => d[indSel])}))
+    .filter(d => d.n >= 30 && Number.isFinite(d.v)).sort((a, b) => ind.mejorSiBaja ? a.v - b.v : b.v - a.v)
+  const tot = d3.median(selSinSec, d => d[indSel])
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.max(220, filas.length * 26 + 40), marginLeft: anchoMedio < 480 ? 150 : 190, marginRight: 60, style: estilo,
+    x: {label: null, grid: true, ticks: 4, tickFormat: ind.pct ? (d => loc.format(d3.extent(filas, f => f.v).reduce((x, y) => y - x) < 0.05 ? ".1%" : ".0%")(d)) : (d => loc.format(".1f")(d))},
+    y: {label: null, domain: filas.map(d => d.sector), tickSize: 0},
+    marks: [
+      Plot.ruleY(filas, {y: "sector", x1: tot, x2: "v", stroke: "#C9D3E6", strokeWidth: 2}),
+      Plot.dot(filas, {y: "sector", x: "v", r: 6, fill: d => d.sec === sector ? "#F8CD00" : "#2C5697", stroke: "#1E3D6E", strokeWidth: d => d.sec === sector ? 1.5 : 0}),
+      Plot.text(filas, {y: "sector", x: "v", text: d => ind.fmt(d.v), dx: 10, textAnchor: "start", fontSize: 10.5, fill: "#4A5468"}),
+      Plot.ruleX([tot], {stroke: "#D03B3B", strokeDasharray: "4 3"}),
+      Plot.tip(filas, Plot.pointerY({y: "sector", x: "v", title: d => `${d.sector}\n${ind.fmt(d.v)}\n${fEnt(d.n)} empresas`, fontSize: 12}))
+    ]
+  })
+  plot.style.cursor = "pointer"
+  plot.addEventListener("click", () => { const f = plot.value; if (f) fijar(viewof sector, sector === f.sec ? "*" : f.sec) })
+  return conPNG(html`<div class="subtitulo">${ind.nombre} · ${anio === "*" ? "todos los años" : anio}. La línea roja es la mediana total (${ind.fmt(tot)});
+    cada punto se une a ella para ver qué tan lejos está cada sector. Ordenado de mejor a peor.</div>${plot}`, "ranking_" + indSel)
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Estadística descriptiva de todos los indicadores"
+{
+  const NOMBRES = {cr: "Razón corriente", at: "Prueba ácida", wk_c: "Capital de trabajo / activo", ct: "Efectivo / pasivo corriente",
+    ti: "Endeudamiento total", fi: "Deuda financiera / ingresos", tl: "Pasivo / patrimonio", fl: "Deuda financiera / patrimonio",
+    gm: "Margen bruto", om_c: "Margen operacional", nm: "Margen neto", re: "ROE", ra: "ROA",
+    ar: "Días de cartera", it: "Días de inventario", st_c: "Días de proveedores",
+    x1: "X1 Capital de trabajo / activo", x2: "X2 Utilidades acumuladas / activo", x3: "X3 Utilidad operacional / activo",
+    x4: "X4 Patrimonio / pasivo", x5: "X5 Ventas / activo", z: "Z' de Altman"}
+  const [dim, cat] = zonaInd !== "*" ? ["zona", {D: "Distress Zone", G: "Gray Zone", S: "Safe Zone"}[zonaInd]]
+                   : anio !== "*" ? ["anio", String(anio)] : ["todas", "Total"]
+  const filas = descriptiva.filter(d => d.dimension === dim && String(d.categoria) === cat && (grupoDesc === "*" || d.grupo === grupoDesc))
+    .map(d => ({Indicador: NOMBRES[d.variable] ?? d.variable, Grupo: d.grupo, N: d.n, "% sin dato": d.pct_na / 100,
+                P25: d.p25, Mediana: d.mediana, P75: d.p75, RIQ: d.riq, "Media (w)": d.media_w, "Desv. est. (w)": d.sd_w}))
+  const num = (x) => x == null ? "–" : Math.abs(x) >= 100 ? fEnt(Math.round(x)) : loc.format(",.3f")(x)
+  return html`${viewof grupoDesc}
+    <div class="subtitulo">Todas las empresas${dim === "anio" ? ` · ${anio}` : dim === "zona" ? ` · zona ${nomZona.get(zonaInd)}` : " · 2016–2025"}.
+      Calculada en R (script 02) sobre el panel completo: no cambia con el filtro de sector ni de departamento.
+      Media y desviación con ratios winsorizados al 1% y 99% por año.</div>
+    ${Inputs.table(filas, {format: {N: fEnt, "% sin dato": fPct, P25: num, Mediana: num, P75: num, RIQ: num, "Media (w)": num, "Desv. est. (w)": num},
+      layout: "auto", rows: 23, maxHeight: 620})}
+    <div class="acciones">${botonesDescarga(() => filas, "estadistica_descriptiva")}</div>`
+}
+```

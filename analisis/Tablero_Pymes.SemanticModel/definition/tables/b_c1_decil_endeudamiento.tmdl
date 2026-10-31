@@ -1,0 +1,105 @@
+table b_c1_decil_endeudamiento
+	lineageTag: c5d63621-30c5-4deb-88cf-b6923d9f5402
+
+	column decil_endeudamiento
+		dataType: double
+		lineageTag: bb298d6d-0ad0-4874-88af-01a40d3a5ad1
+		summarizeBy: sum
+		sourceColumn: decil_endeudamiento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ti_mediana
+		dataType: double
+		lineageTag: 93c9cfdb-4e88-493b-8e2c-77abfc9a9b70
+		summarizeBy: sum
+		sourceColumn: ti_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ra_mediana
+		dataType: double
+		lineageTag: c077c142-6a3d-44fa-9a34-f4229e18958d
+		summarizeBy: sum
+		sourceColumn: ra_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column re_mediana
+		dataType: double
+		lineageTag: 09dc729d-8af9-4e0c-8706-5100655f9ef7
+		summarizeBy: sum
+		sourceColumn: re_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column om_c_mediana
+		dataType: double
+		lineageTag: dddb207d-a661-4c40-a5d6-5e67265ba765
+		summarizeBy: sum
+		sourceColumn: om_c_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column nm_mediana
+		dataType: double
+		lineageTag: af1db3ca-9c29-43a2-a1e4-248be46ad30f
+		summarizeBy: sum
+		sourceColumn: nm_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cr_mediana
+		dataType: double
+		lineageTag: 3fbc3444-1fdf-4308-9748-8d621e7fb19b
+		summarizeBy: sum
+		sourceColumn: cr_mediana
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column pct_distress
+		dataType: double
+		lineageTag: 43566399-3ce5-4b8d-bbd6-0e11d3e0d908
+		summarizeBy: sum
+		sourceColumn: pct_distress
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column n
+		dataType: double
+		lineageTag: 60b97a0b-42e6-49e1-a5d1-7a6140893e26
+		summarizeBy: sum
+		sourceColumn: n
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition b_c1_decil_endeudamiento = m
+		mode: import
+		source =
+				let
+				       Origen = LeerCSV("b_c1_decil_endeudamiento.csv")
+				   in
+				       Origen
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

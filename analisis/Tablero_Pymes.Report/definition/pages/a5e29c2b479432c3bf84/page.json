@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "a5e29c2b479432c3bf84",
+  "displayName": "3 Liquidez y deuda",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920
+}

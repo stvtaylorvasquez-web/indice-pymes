@@ -1,0 +1,24 @@
+expression CarpetaProyecto = "C:\Users\Usuario\Desktop\3 PYMES FABIO" meta [IsParameterQuery=true, Type="Any", IsParameterQueryRequired=true]
+	lineageTag: 164830fc-2a65-4e5f-be89-8d3d583dcd4e
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Text
+
+expression LeerCSV =
+		(archivo as text) as table =>
+		let
+		    Ruta = CarpetaProyecto & "\resultados\powerbi\" & archivo,
+		    Origen = Csv.Document(File.Contents(Ruta), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+		    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+		    ColumnasTexto = {"categoria", "ciiu_cod", "ciiu_desc", "ciiu_seccion", "componente", "corte", "cuadrante", "departamento", "dependiente", "desde", "dimension", "grupo", "grupo1", "grupo2", "hacia", "magnitud", "medida", "modelo", "nivel_alerta", "razon_social", "sector", "termino", "var1", "var2", "variable", "zona", "zona_actual"},
+		    Tipos = List.Transform(Table.ColumnNames(Encabezados), each {_, if List.Contains(ColumnasTexto, _) then type text else type number}),
+		    Resultado = Table.TransformColumnTypes(Encabezados, Tipos, "en-US")
+		in
+		    Resultado
+	lineageTag: e58d0c1b-51b9-4712-ad4f-682a254deae6
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Function
+

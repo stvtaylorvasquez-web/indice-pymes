@@ -1,0 +1,51 @@
+table u06_transicion_total
+	lineageTag: c8b2c79a-932e-4514-9830-0dbf599851a8
+
+	column desde
+		dataType: string
+		lineageTag: a3e237f2-33ce-4155-9018-0fb61f0ebfd1
+		summarizeBy: none
+		sourceColumn: desde
+
+		annotation SummarizationSetBy = Automatic
+
+	column hacia
+		dataType: string
+		lineageTag: f7dfeecc-f9ff-489a-a079-679ef876ff31
+		summarizeBy: none
+		sourceColumn: hacia
+
+		annotation SummarizationSetBy = Automatic
+
+	column casos
+		dataType: double
+		lineageTag: 768e041b-feae-42ce-94d3-d668dc14177c
+		summarizeBy: sum
+		sourceColumn: casos
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column pct_fila
+		dataType: double
+		lineageTag: f30ad205-8b84-460f-8259-36b57b54febb
+		summarizeBy: sum
+		sourceColumn: pct_fila
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition u06_transicion_total = m
+		mode: import
+		source =
+				let
+				       Origen = LeerCSV("u06_transicion_total.csv")
+				   in
+				       Origen
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

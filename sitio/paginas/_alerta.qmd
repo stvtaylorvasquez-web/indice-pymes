@@ -1,0 +1,118 @@
+# Alerta 2026
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  const m1 = modelos.find(d => d.modelo.startsWith("M1"))
+  return encabezado(`Radar de alerta temprana · ${anioMax + 1}`, `¿Qué empresas podrían caer a Distress en ${anioMax + 1}?`,
+    html`Probabilidad estimada de pasar a zona Distress el próximo año para las empresas que en ${anioMax} están en zona Gris o Segura.
+    Modelo logit con el Z' y otros indicadores, validado fuera de muestra (AUC <b>${loc.format(".3f")(m1.auc_prueba)}</b>; 1 = perfecto, 0,5 = azar).
+    Sirve para <b>ordenar por riesgo</b>; la probabilidad es una aproximación, no un pronóstico de quiebra.
+    Esta pestaña usa los filtros de sector y departamento; el año no aplica.`)
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  const al = alerta.filter(d => (sector === "*" || d.sec === sector) && (depto === "*" || d.dep === depto))
+  const m1 = modelos.find(d => d.modelo.startsWith("M1"))
+  const muy = al.filter(d => d.nivel === 4).length, alta = al.filter(d => d.nivel === 3).length
+  const kpi = (icono, label, valor, nota) => html`<div class="kpi"><div class="k-label"><span class="k-icono">${icono}</span>${label}</div>
+    <div class="k-valor">${valor}</div><div class="k-delta"><span>${nota}</span></div></div>`
+  return html`<div class="kpis">
+    ${kpi("▦", "Empresas evaluadas", fEnt(al.length), `En zona Gris o Segura en ${anioMax}`)}
+    ${kpi("▲", "Alerta muy alta", fEnt(muy), `${fPct(al.length ? muy / al.length : 0)} · probabilidad > 15%`)}
+    ${kpi("△", "Alerta alta", fEnt(alta), `${fPct(al.length ? alta / al.length : 0)} · entre 5% y 15%`)}
+    ${kpi("%", "Probabilidad promedio", fPct(d3.mean(al, d => d.prob) ?? 0), `Tasa histórica de caída: ${loc.format(".1f")(m1.tasa_caida_promedio)}%`)}
+  </div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Empresas por nivel de alerta"
+{
+  const al = alerta.filter(d => (sector === "*" || d.sec === sector) && (depto === "*" || d.dep === depto))
+  const filas = NIVELES.map(n => ({...n, n: al.filter(d => d.nivel === n.k).length}))
+  const tot = d3.sum(filas, d => d.n)
+  const plot = Plot.plot({
+    width: anchoMedio, height: 320, marginLeft: 50, marginBottom: 40, style: estilo,
+    x: {type: "band", label: null, domain: NIVELES.map(n => n.nombre), padding: 0.25, tickFormat: d => `${d}\n${NIVELES.find(n => n.nombre === d).rango}`},
+    y: {label: "↑ Empresas", grid: true},
+    marks: [
+      Plot.barY(filas, {x: "nombre", y: "n", fill: "color",
+        fillOpacity: d => nivelSel.includes(d.k) ? 1 : 0.35,
+        channels: {Rango: "rango", Empresas: d => fEnt(d.n), Participación: d => fPct(tot ? d.n / tot : 0)},
+        tip: {format: {x: true, y: false, fill: false, fillOpacity: false}, fontSize: 12}}),
+      Plot.text(filas, {x: "nombre", y: "n", text: d => `${fEnt(d.n)} · ${fPct0(tot ? d.n / tot : 0)}`, dy: -8, lineAnchor: "bottom", fontWeight: 700, fill: "#14213D"}),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`<div class="subtitulo">Las barras resaltadas son los niveles elegidos para la tabla de abajo.</div>${plot}`, "niveles_alerta")
+}
+```
+
+```{ojs}
+//| title: "Mapa de alerta: % de empresas en alerta alta o muy alta"
+{
+  const al = alerta.filter(d => sector === "*" || d.sec === sector)
+  const agg = new Map(Array.from(d3.group(al, d => d.dep), ([dep, rows]) => [dep, {n: rows.length, p: rows.filter(d => d.nivel >= 3).length / rows.length}]))
+  const feats = geo.features.filter(f => f.properties.dep !== "SAN ANDRES Y PROVIDENCIA")
+  const val = (dep) => { const a = agg.get(dep); return a && a.n >= 10 ? a.p : null }
+  const vals = feats.map(f => val(f.properties.dep)).filter(v => v != null)
+  const conDatos = feats.filter(f => val(f.properties.dep) != null), sinDatos = feats.filter(f => val(f.properties.dep) == null)
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.round(anchoMedio * 1.05), margin: 4, style: estilo,
+    projection: {type: "mercator", domain: {type: "FeatureCollection", features: feats}},
+    color: {type: "linear", domain: [0, d3.max(vals) ?? 0.3], range: ["#FFF1DC", "#9E1B12"], interpolate: "lab",
+            legend: true, label: "% en alerta alta o muy alta", tickFormat: fPct0, width: Math.min(320, anchoMedio - 20)},
+    marks: [
+      Plot.geo(sinDatos, {fill: "#D5D9E1", stroke: "white", strokeWidth: 0.8}),
+      Plot.geo(conDatos, {fill: f => val(f.properties.dep), stroke: "white", strokeWidth: 0.8}),
+      Plot.geo(feats.filter(f => f.properties.dep === depto), {stroke: "#F8CD00", strokeWidth: 3.5}),
+      Plot.geo(feats.filter(f => f.properties.dep === depto), {stroke: "#14213D", strokeWidth: 1})
+    ]
+  })
+  const mapa = activarMapa(plot, conDatos, sinDatos,
+    f => { const a = agg.get(f.properties.dep), v = val(f.properties.dep)
+      return html`<b>${f.properties.nombre}</b><br>Alerta alta o muy alta: <b>${v == null ? "menos de 10 empresas" : fPct(v)}</b><br>Evaluadas: ${fEnt(a?.n ?? 0)}` },
+    f => fijar(viewof depto, depto === f.properties.dep ? "*" : f.properties.dep))
+  return conPNG(html`<div class="subtitulo">${sector === "*" ? "Todos los sectores" : `Sector ${nomSector.get(sector)}`}. Clic en un departamento para filtrar.</div>${mapa}`, "mapa_alerta")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Empresas ordenadas por probabilidad de caer a Distress"
+{
+  const q = (buscar ?? "").trim().toLowerCase()
+  const al = alerta.filter(d => (sector === "*" || d.sec === sector) && (depto === "*" || d.dep === depto) && nivelSel.includes(d.nivel))
+  if (!meta.alerta_por_empresa) {
+    const filas = Array.from(d3.group(al, d => d.sec), ([s, rows]) => ({Sector: nomSector.get(s) ?? s, Empresas: rows.length,
+      "Prob. promedio": d3.mean(rows, d => d.prob), "Muy alta": rows.filter(d => d.nivel === 4).length})).sort((a, b) => b["Prob. promedio"] - a["Prob. promedio"])
+    return html`<div class="subtitulo">El semillero publica la alerta solo de forma agregada.</div>
+      ${Inputs.table(filas, {format: {"Prob. promedio": fPct, Empresas: fEnt}, layout: "auto"})}`
+  }
+  const filas = al.filter(d => !q || String(d.nit).includes(q) || (d.razon_social ?? "").toLowerCase().includes(q))
+    .map(d => ({Empresa: d.razon_social, NIT: d.nit, Sector: nomSector.get(d.sec) ?? d.sec, Departamento: nomDepto(d.dep),
+                Zona: nomZona.get(d.zona), "Z'": d.z, Probabilidad: d.prob, Nivel: d.nivel}))
+  const maxP = d3.max(alerta, d => d.prob)
+  const tabla = Inputs.table(filas, {
+    format: {NIT: x => String(x), "Z'": fDec,
+      Probabilidad: x => html`<div class="celda-barra"><i style="width:${Math.max(3, 100 * x / maxP)}%;background:#F6CFCB"></i><span>${fPct(x)}</span></div>`,
+      Nivel: k => { const n = NIVELES[k - 1]; return html`<span class="nivel" style="--c:${n.color}">${n.nombre}</span>` }},
+    width: {Empresa: 250, Sector: 160, Probabilidad: 130, Nivel: 90}, layout: "auto", rows: 18, maxHeight: 560, sort: "Probabilidad", reverse: true
+  })
+  return html`<div class="controles-fila">${viewof buscar}${viewof nivelSel}</div>
+    <div class="subtitulo">${fEnt(filas.length)} empresas con los filtros. Probabilidad estimada de estar en Distress en ${anioMax + 1}.</div>
+    ${tabla}
+    <div class="acciones">${botonesDescarga(() => filas.map(d => ({...d, Nivel: NIVELES[d.Nivel - 1].nombre})), "alerta_" + (anioMax + 1))}</div>`
+}
+```

@@ -1,0 +1,215 @@
+# Panorama
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  if (actual.n === 0) return html`<div class="hero"><div class="hero-txt"><div class="kicker">Sin resultados</div>
+    <h2>No hay empresas con esa combinación de filtros.</h2><p>Pruebe con otro sector o departamento.</p></div></div>`
+  const inicio = porAnio[0]
+  const cuando = anio === "*" ? `Entre ${anioMin} y ${anioMax}` : `En ${anio}`
+  const tend = (anio !== "*" && inicio && anio !== inicio.anio)
+    ? html`Frente a ${inicio.anio}, la participación en Distress ${actual.dist < inicio.dist ? "bajó" : "subió"}
+           <b>${fPp(actual.dist - inicio.dist).replace("+", "").replace("−", "")}</b> y la mediana del Z' pasó de
+           ${fDec(inicio.z)} a <b>${fDec(actual.z)}</b>.`
+    : html`La mediana del Z' de Altman en el periodo fue <b>${fDec(actual.z)}</b>.`
+  return html`<div class="hero"><div class="hero-txt">
+    <div class="kicker">Índice de salud financiera · ${anio === "*" ? `${anioMin}–${anioMax}` : `corte ${anio}`}</div>
+    <h2>${cuando}, ${fPct(actual.dist)} de las ${fEnt(actual.n)} empresas${ambito}
+        estaba en zona de Distress.</h2>
+    <p>${tend} El Distress es una señal contable de deterioro, no una quiebra observada.</p>
+  </div><img class="hero-logo" src="assets/logo-javeriana-cali-blanco.png" alt="Pontificia Universidad Javeriana Cali"></div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  const spark = (key) => {
+    const pts = porAnio.filter(d => Number.isFinite(d[key]))
+    return Plot.plot({
+      width: 200, height: 38, margin: 4, axis: null,
+      x: {domain: d3.extent(anios)}, y: {domain: d3.extent(pts, d => d[key]), nice: false},
+      marks: [
+        Plot.areaY(pts, {x: "anio", y1: d3.min(pts, d => d[key]), y2: key, fill: "#2C5697", fillOpacity: 0.08, curve: "monotone-x"}),
+        Plot.lineY(pts, {x: "anio", y: key, stroke: "#2C5697", strokeWidth: 2, curve: "monotone-x"}),
+        anio === "*" ? null : Plot.dot(pts.filter(d => d.anio === anio),
+          {x: "anio", y: key, r: 4, fill: "#F8CD00", stroke: "#1E3D6E", strokeWidth: 1.5})
+      ]
+    })
+  }
+  const delta = (key, fmt, mejorSiBaja) => {
+    if (!previo || !Number.isFinite(previo[key])) return html`<span>${anio === "*" ? "Panel completo" : "Primer año del panel"}</span>`
+    const d = actual[key] - previo[key]
+    if (Math.abs(d) < (key === "z" ? 0.005 : 0.0005)) return html`<span>■ sin cambio vs ${anio - 1}</span>`
+    const cls = (d < 0) === mejorSiBaja ? "bien" : "mal"
+    return html`<span class="${cls}">${d > 0 ? "▲" : "▼"} ${fmt(d)}</span> vs ${anio - 1}`
+  }
+  const kpi = (icono, label, valor, deltaHtml, sparkKey) => html`<div class="kpi">
+    <div class="k-label"><span class="k-icono">${icono}</span>${label}</div><div class="k-valor">${valor}</div>
+    <div class="k-delta">${deltaHtml}</div>${sparkKey ? spark(sparkKey) : ""}</div>`
+  return html`<div class="kpis">
+    ${kpi("▦", "Empresas", fEnt(actual.n), html`<span>${ambito ? "Con los filtros aplicados" : "Panel balanceado"}</span>`, null)}
+    ${kpi("●", "En zona Distress", fPct(actual.dist), delta("dist", fPp, true), "dist")}
+    ${kpi("Z", "Z' mediano", fDec(actual.z), delta("z", x => fDif(x, fDec), false), "z")}
+    ${kpi("⚖", "Endeudamiento mediano", fPct(actual.ti), delta("ti", fPp, true), "ti")}
+    ${kpi("↗", "ROA mediano", fPct(actual.ra), delta("ra", fPp, false), "ra")}
+  </div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Mapa: ¿dónde están las empresas y cómo les va?"
+{
+  // Agregados por departamento con el año y sector elegidos (sin filtrar por departamento)
+  const agg = new Map(Array.from(d3.group(selSinDep, d => d.dep), ([dep, rows]) => [dep, resumen(rows)]))
+  const M = {
+    dist: {nombre: "% en Distress", fmt: fPct, rango: ["#FCE4E1", "#9E1B12"]},
+    z:    {nombre: "Z' mediano", fmt: fDec, rango: ["#E3ECF8", "#1E3D6E"]},
+    ti:   {nombre: "Endeudamiento mediano", fmt: fPct, rango: ["#FFF1DC", "#B4570E"]},
+    n:    {nombre: "Empresas", fmt: fEnt, rango: ["#E3ECF8", "#1E3D6E"]}
+  }[metricaMapa]
+  const MIN = 10
+  const valor = (dep) => { const a = agg.get(dep); return a && a.n >= MIN ? a[metricaMapa] : null }
+  const feats = geo.features.filter(f => f.properties.dep !== "SAN ANDRES Y PROVIDENCIA")
+  const sa = geo.features.find(f => f.properties.dep === "SAN ANDRES Y PROVIDENCIA")
+  const vals = geo.features.map(f => valor(f.properties.dep)).filter(v => v != null)
+  const conDatos = feats.filter(f => valor(f.properties.dep) != null), sinDatos = feats.filter(f => valor(f.properties.dep) == null)
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.round(anchoMedio * 1.12), margin: 4, style: estilo,
+    projection: {type: "mercator", domain: {type: "FeatureCollection", features: feats}},
+    color: {type: metricaMapa === "n" ? "log" : "linear", domain: d3.extent(vals), range: M.rango,
+            interpolate: "lab", legend: true, label: M.nombre, tickFormat: M.fmt, width: Math.min(320, anchoMedio - 20)},
+    marks: [
+      Plot.geo(sinDatos, {fill: "#D5D9E1", stroke: "white", strokeWidth: 0.8}),
+      Plot.geo(conDatos, {fill: f => valor(f.properties.dep), stroke: "white", strokeWidth: 0.8}),
+      Plot.geo(feats.filter(f => f.properties.dep === depto), {stroke: "#F8CD00", strokeWidth: 3.5}),
+      Plot.geo(feats.filter(f => f.properties.dep === depto), {stroke: "#14213D", strokeWidth: 1})
+    ]
+  })
+  const mapa = activarMapa(plot, conDatos, sinDatos,
+    f => { const a = agg.get(f.properties.dep), v = valor(f.properties.dep)
+      return html`<b>${f.properties.nombre}</b><br>${M.nombre}: <b>${v == null ? "menos de 10 empresas" : M.fmt(v)}</b><br>
+        Empresas: ${fEnt(a?.n ?? 0)}${v == null ? "" : html`<br><small>Clic para ${depto === f.properties.dep ? "quitar el filtro" : "filtrar"}</small>`}` },
+    f => fijar(viewof depto, depto === f.properties.dep ? "*" : f.properties.dep))
+  const vsa = valor("SAN ANDRES Y PROVIDENCIA")
+  return conPNG(html`${viewof metricaMapa}<div class="subtitulo"><b>${M.nombre}</b> · ${anio === "*" ? `${anioMin}–${anioMax}` : anio} ·
+      ${sector === "*" ? "todos los sectores" : html`sector <b>${nomSector.get(sector)}</b>`}.
+      Clic en un departamento para filtrar; clic de nuevo para quitar el filtro.</div>
+    ${mapa}
+    <div class="nota-mapa">San Andrés y Providencia: <b>${vsa == null ? "menos de 10 empresas" : M.fmt(vsa)}</b> ·
+      Gris: menos de 10 empresas. Mapa: DANE, Marco Geoestadístico Nacional 2018.</div>`, "mapa_departamentos")
+}
+```
+
+```{ojs}
+//| title: "Participación en Distress por sector económico"
+{
+  const filtro = selSinSec.filter(d => d.zona)
+  const filas = Array.from(d3.group(filtro, d => d.sec), ([s, rows]) => ({
+      sec: s, sector: nomSector.get(s) ?? s,
+      empresas: new Set(rows.map(d => d.nit)).size,
+      pct: rows.filter(d => d.zona === "D").length / rows.length
+    })).filter(d => d.empresas >= 30).sort((a, b) => b.pct - a.pct)
+  const total = filtro.length ? filtro.filter(d => d.zona === "D").length / filtro.length : 0
+  if (!filas.length) return html`<p class="subtitulo">No hay sectores con al menos 30 empresas para este filtro.</p>`
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.max(220, filas.length * 28 + 40), marginLeft: anchoMedio < 480 ? 150 : 190, marginRight: 52, style: estilo,
+    x: {label: null, percent: true, tickFormat: d => d + "%", grid: true, ticks: 4},
+    y: {label: null, domain: filas.map(d => d.sector), tickSize: 0},
+    marks: [
+      Plot.barX(filas, {y: "sector", x: "pct", insetTop: 4, insetBottom: 4,
+        fill: d => sector === "*" ? "#2C5697" : d.sec === sector ? "#F8CD00" : "#B9C8E3"}),
+      Plot.barX(filas.filter(d => d.sec === sector), {y: "sector", x: "pct", insetTop: 4, insetBottom: 4, fill: "none", stroke: "#1E3D6E", strokeWidth: 1.5}),
+      Plot.text(filas, {y: "sector", x: "pct", text: d => fPct(d.pct), dx: 6, textAnchor: "start", fill: "#4A5468", fontSize: 11}),
+      Plot.ruleX([total], {stroke: "#D03B3B", strokeDasharray: "4 3", strokeWidth: 1.5}),
+      Plot.ruleX([0], {stroke: "#C8CDD8"}),
+      Plot.tip(filas, Plot.pointerY({y: "sector", x: "pct", fontSize: 12,
+        title: d => `${d.sector}\n${fPct(d.pct)} en Distress\n${fEnt(d.empresas)} empresas\nClic para filtrar`}))
+    ]
+  })
+  plot.style.cursor = "pointer"
+  plot.addEventListener("click", () => { const f = plot.value; if (f) fijar(viewof sector, sector === f.sec ? "*" : f.sec) })
+  return conPNG(html`<div class="subtitulo">Sectores con al menos 30 empresas · ${anio === "*" ? "todos los años" : anio}${depto === "*" ? "" : " · " + nomDepto(depto)}.
+    La línea roja marca el total (${fPct(total)}). Clic en una barra para filtrar por ese sector.</div>${plot}`, "distress_por_sector")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Cómo se distribuyen las empresas según el Z' de Altman?"
+{
+  const filas = porAnio.flatMap(p => {
+    const rows = base.filter(d => d.anio === p.anio && d.zona)
+    const tot = rows.length
+    return ZONAS.map(z => { const n = rows.filter(d => d.zona === z.k).length
+      return {anio: p.anio, zona: z.k, nombre: z.nombre, n, pct: tot ? n / tot : 0} })
+  })
+  const plot = Plot.plot({
+    width: anchoCompleto, height: 320, marginLeft: 44, marginBottom: 28, style: estilo,
+    x: {type: "band", label: null, tickFormat: d => anchoCompleto < 480 ? "’" + String(d).slice(2) : String(d), padding: 0.18},
+    y: {label: null, percent: true, tickFormat: d => d + "%", ticks: 5, grid: true},
+    color: {domain: ZONAS.map(z => z.k), range: ZONAS.map(z => z.color)},
+    marks: [
+      Plot.barY(filas, Plot.stackY({order: ["D", "G", "S"]}, {
+        x: "anio", y: "pct", fill: "zona", stroke: "white", strokeWidth: 1.5,
+        fillOpacity: d => (anio === "*" || d.anio === anio) ? 1 : 0.45,
+        channels: {Zona: "nombre", Empresas: d => fEnt(d.n), Participación: d => fPct(d.pct)},
+        tip: {format: {x: true, y: false, fill: false, Zona: true, Empresas: true, Participación: true}, fontSize: 12}
+      })),
+      Plot.text(filas.filter(d => d.zona === "D" && d.anio === foco), {
+        x: "anio", y: "pct", text: d => fPct(d.pct), dy: -6, lineAnchor: "bottom", fill: "#14213D", fontWeight: 700, fontSize: 12}),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`${leyenda(ZONAS)}${plot}`, "zonas_por_anio")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Indicadores clave: evolución de las medianas"
+{
+  const lista = ["cr", "ti", "om", "ra", "re"].map(k => indPorK.get(k))
+  const panel = (ind) => {
+    const pts = porAnio.filter(d => Number.isFinite(d[ind.k]))
+    const f = pts.find(d => d.anio === foco)
+    const ext = d3.extent(pts, p => p[ind.k])
+    const fmtEje = ind.pct ? (d => loc.format(ext[1] - ext[0] < 0.04 ? ".1%" : ".0%")(d)) : (d => loc.format(".1f")(d))
+    return html`<div><h4>${ind.nombre}</h4><div class="ult">${f ? ind.fmt(f[ind.k]) : "–"} <small>${foco}</small></div>
+    ${Plot.plot({
+      width: 260, height: 140, marginLeft: 42, marginRight: 10, marginTop: 10, marginBottom: 22,
+      style: {...estilo, fontSize: "10.5px", color: "#7A8294"},
+      x: {label: null, tickFormat: d => "’" + String(d).slice(2), ticks: anios.filter((a, i) => i % 3 === 0), domain: d3.extent(anios)},
+      y: {label: null, grid: true, ticks: 3, nice: true, tickFormat: fmtEje},
+      marks: [
+        Plot.areaY(pts, {x: "anio", y1: ext[0], y2: ind.k, fill: "#2C5697", fillOpacity: 0.07, curve: "monotone-x"}),
+        Plot.lineY(pts, {x: "anio", y: ind.k, stroke: "#2C5697", strokeWidth: 2, curve: "monotone-x"}),
+        Plot.dot(pts, {x: "anio", y: ind.k, r: 2.5, fill: "#2C5697"}),
+        Plot.dot(pts.filter(d => d.anio === foco), {x: "anio", y: ind.k, r: 5, fill: "#F8CD00", stroke: "#1E3D6E", strokeWidth: 1.5}),
+        Plot.tip(pts, Plot.pointerX({x: "anio", y: ind.k, title: d => `${d.anio}\n${ind.fmt(d[ind.k])}`, fontSize: 12}))
+      ]
+    })}</div>`
+  }
+  return html`<div class="subtitulo">Mediana de las empresas filtradas en cada año (${textoFiltro.split(" · ").slice(1).join(" · ")}). El punto amarillo marca ${foco}.</div>
+    <div class="multiples">${lista.map(panel)}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+html`<div class="pie">
+<b>Fuente:</b> ${meta.fuente}. Cálculos del Semillero de Investigación Pensamiento y Praxis, Pontificia Universidad Javeriana Cali.
+<b>Notas:</b> el panel incluye solo empresas que reportaron los ${meta.anio_max - meta.anio_min + 1} años (posible sesgo de supervivencia).
+"Distress" es una zona de riesgo contable del Z' de Altman, no una quiebra observada.
+</div>`
+```

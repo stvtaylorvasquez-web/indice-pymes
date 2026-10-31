@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "65fb4eaa3387154a5160",
+  "position": {
+    "x": 1410,
+    "y": 96,
+    "z": 5000,
+    "height": 130,
+    "width": 240,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "m_e4_alerta_temprana"
+                    }
+                  },
+                  "Property": "Alerta muy alta"
+                }
+              },
+              "queryRef": "m_e4_alerta_temprana.Alerta muy alta",
+              "nativeQueryRef": "Alerta muy alta",
+              "displayName": "Alerta muy alta (>15%)"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

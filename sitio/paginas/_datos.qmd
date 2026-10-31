@@ -1,0 +1,84 @@
+# Descargas
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Centro de datos", "Descargue los datos del índice",
+  html`Elija un conjunto de datos, revise la vista previa y descárguelo en CSV o Excel. Los conjuntos marcados con
+  <b>(con filtros)</b> respetan el año, el sector y el departamento elegidos en la barra lateral: <b>${textoFiltro}</b>.
+  Cada gráfico del tablero también tiene su botón <b>⤓ PNG</b> para descargarlo como imagen.`)
+```
+
+```{ojs}
+//| output: false
+// Cada conjunto de datos: nombre, descripción y función que arma las filas
+function tablaPor(clave, nombreClave, etiqueta) {
+  return Array.from(d3.group(sel, d => d[clave]), ([k, rows]) => { const r = resumen(rows)
+    return {[nombreClave]: etiqueta(k), empresas: r.n, pct_distress: r.dist, z_mediano: r.z, razon_corriente: r.cr,
+            endeudamiento: r.ti, margen_operacional: r.om, margen_neto: r.nm, roa: r.ra, roe: r.re, dias_cartera: r.ar, pct_patrimonio_negativo: r.pn} })
+    .sort((a, b) => b.empresas - a.empresas)
+}
+CONJUNTOS = [
+  {k: "panel", nombre: "Panel empresa-año (con filtros)", desc: "Una fila por empresa y año con sus indicadores, zona del Z' y cuadrante.",
+   filas: () => sel.map(d => { const o = {nit: d.nit, razon_social: nomEmpresa.get(d.nit), anio: d.anio, sector: nomSector.get(d.sec), seccion_ciiu: d.sec,
+     departamento: nomDepto(d.dep), zona: nomZona.get(d.zona) ?? "", cuadrante: d.cuad ? CUADS[d.cuad - 1].nombre : ""}
+     for (const c of columnasPanel) o[c] = d[c]; return o })},
+  {k: "sector", nombre: "Indicadores por sector (con filtros)", desc: "Medianas por sección CIIU.", filas: () => tablaPor("sec", "sector", s => nomSector.get(s) ?? s)},
+  {k: "depto", nombre: "Indicadores por departamento (con filtros)", desc: "Medianas por departamento del domicilio.", filas: () => tablaPor("dep", "departamento", nomDepto)},
+  {k: "anual", nombre: "Serie anual 2016–2025 (con filtros de sector y departamento)", desc: "Una fila por año: % en cada zona e indicadores medianos.",
+   filas: () => porAnio.map(d => ({anio: d.anio, empresas: d.n, pct_distress: d.dist, pct_gris: d.gris, pct_segura: d.segura, z_mediano: d.z,
+     razon_corriente: d.cr, endeudamiento: d.ti, margen_operacional: d.om, margen_neto: d.nm, roa: d.ra, roe: d.re, dias_cartera: d.ar}))},
+  {k: "alerta", nombre: `Alerta ${anioMax + 1} (con filtros de sector y departamento)`, desc: "Probabilidad estimada de caer a Distress el próximo año.",
+   filas: () => alerta.filter(d => (sector === "*" || d.sec === sector) && (depto === "*" || d.dep === depto))
+     .map(d => ({nit: d.nit, razon_social: d.razon_social, sector: nomSector.get(d.sec), departamento: nomDepto(d.dep),
+                 zona_actual: nomZona.get(d.zona), z_actual: d.z, probabilidad: d.prob, nivel: NIVELES[d.nivel - 1].nombre}))},
+  {k: "desc", nombre: "Estadística descriptiva (panel completo)", desc: "Calculada en R (script 02) por año, zona, sector y departamento.", filas: () => descriptiva},
+  {k: "modelos", nombre: "Desempeño de los modelos de alerta", desc: "Validación fuera de muestra (script 04).", filas: () => modelos},
+  {k: "dicc", nombre: "Diccionario de variables", desc: "Qué significa cada columna y cómo se calcula.", filas: () => diccionario}
+]
+viewof conjunto = Inputs.radio(new Map(CONJUNTOS.map(c => [c.nombre, c.k])), {value: "sector"})
+viewof columnasPanel = Inputs.checkbox(new Map(INDS.map(d => [d.corto, d.k])), {value: INDS.map(d => d.k), label: "Indicadores a incluir"})
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "1. Elija los datos"
+html`<div class="lista-radio">${viewof conjunto}</div>${conjunto === "panel" ? html`<div style="margin-top:.8rem">${viewof columnasPanel}</div>` : ""}`
+```
+
+```{ojs}
+//| title: "2. Revise y descargue"
+{
+  const c = CONJUNTOS.find(d => d.k === conjunto)
+  const filas = c.filas()
+  const todo = html`<button class="btn-grande">⤓ Todo en un Excel (varias hojas)</button>`
+  todo.onclick = async () => {
+    const XLSX = await require("xlsx@0.18.5/dist/xlsx.full.min.js")
+    const libro = XLSX.utils.book_new()
+    for (const k of ["sector", "depto", "anual", "alerta", "modelos", "dicc"]) {
+      const cc = CONJUNTOS.find(d => d.k === k)
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(cc.filas()), k)
+    }
+    guardarLibro(XLSX, libro, `indice_pymes_${textoFiltro.replaceAll(" · ", "_").replaceAll(" ", "-")}`)
+  }
+  return html`<div class="ficha-datos"><h4>${c.nombre}</h4><p>${c.desc}</p>
+    <div class="cifras"><span><b>${fEnt(filas.length)}</b> filas</span><span><b>${filas.length ? Object.keys(filas[0]).length : 0}</b> columnas</span></div>
+    <div class="acciones">${botonesDescarga(() => filas, `indice_pymes_${conjunto}`)}${todo}</div></div>
+    <div class="subtitulo" style="margin-top:.8rem">Vista previa (primeras 200 filas):</div>
+    ${Inputs.table(filas.slice(0, 200), {layout: "auto", rows: 12, maxHeight: 420})}`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Cómo citar y condiciones de uso"
+html`<div class="pie" style="font-size:.86rem;color:#4A5468">
+<p><b>Cita sugerida:</b> Semillero de Investigación Pensamiento y Praxis, Pontificia Universidad Javeriana Cali (${meta.actualizado.slice(0, 4)}).
+<i>Salud Financiera PYME · Colombia ${meta.anio_min}–${meta.anio_max}</i>. Datos actualizados el ${meta.actualizado}.</p>
+<p><b>Fuente primaria:</b> ${meta.fuente}. Los indicadores, zonas del Z' y modelos son cálculos del semillero.</p>
+<p>Los datos se ofrecen con fines académicos. La zona Distress y la alerta son señales estadísticas de riesgo contable,
+no calificaciones crediticias ni predicciones de quiebra.</p></div>`
+```

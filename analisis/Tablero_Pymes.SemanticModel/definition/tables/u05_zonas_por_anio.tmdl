@@ -1,0 +1,53 @@
+table u05_zonas_por_anio
+	lineageTag: 82a73b07-d6d0-4738-b848-85ed1ad75d95
+
+	column anio
+		dataType: double
+		lineageTag: ed2074b2-1e30-4d82-80bc-6f7062a07112
+		summarizeBy: sum
+		sourceColumn: anio
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column zona
+		dataType: string
+		lineageTag: f4da6131-23cc-4302-b6ab-14a3206126d9
+		summarizeBy: none
+		sourceColumn: zona
+
+		annotation SummarizationSetBy = Automatic
+
+	column empresas
+		dataType: double
+		lineageTag: ed36e76a-2113-42f9-8607-2a41dfa5eee6
+		summarizeBy: sum
+		sourceColumn: empresas
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column pct
+		dataType: double
+		lineageTag: 07969bb7-0bc7-4e9d-8f35-6c54b81e7486
+		summarizeBy: sum
+		sourceColumn: pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition u05_zonas_por_anio = m
+		mode: import
+		source =
+				let
+				       Origen = LeerCSV("u05_zonas_por_anio.csv")
+				   in
+				       Origen
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

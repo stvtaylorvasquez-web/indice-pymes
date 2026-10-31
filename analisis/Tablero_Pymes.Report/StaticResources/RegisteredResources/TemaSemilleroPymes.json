@@ -1,0 +1,21 @@
+{
+  "name": "Tema Semillero Pymes",
+  "dataColors": [
+    "#2166AC",
+    "#E67E22",
+    "#1B9E77",
+    "#C0392B",
+    "#7570B3",
+    "#F1C40F",
+    "#66A61E",
+    "#7F8C8D",
+    "#A6761D",
+    "#E7298A"
+  ],
+  "foreground": "#1F2A44",
+  "background": "#FFFFFF",
+  "tableAccent": "#2166AC",
+  "good": "#27AE60",
+  "neutral": "#F1C40F",
+  "bad": "#C0392B"
+}

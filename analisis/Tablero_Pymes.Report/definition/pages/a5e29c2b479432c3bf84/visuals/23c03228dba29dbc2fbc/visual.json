@@ -1,0 +1,137 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "23c03228dba29dbc2fbc",
+  "position": {
+    "x": 970,
+    "y": 412,
+    "z": 5000,
+    "height": 316,
+    "width": 930,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "b_c1_decil_endeudamiento"
+                    }
+                  },
+                  "Property": "decil_endeudamiento"
+                }
+              },
+              "queryRef": "b_c1_decil_endeudamiento.decil_endeudamiento",
+              "nativeQueryRef": "decil_endeudamiento",
+              "displayName": "Decil de endeudamiento",
+              "format": "0"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "b_c1_decil_endeudamiento"
+                        }
+                      },
+                      "Property": "ra_mediana"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(b_c1_decil_endeudamiento.ra_mediana)",
+              "nativeQueryRef": "Sum of ra_mediana",
+              "displayName": "ROA mediano",
+              "format": "0.0%"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "b_c1_decil_endeudamiento"
+                        }
+                      },
+                      "Property": "om_c_mediana"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(b_c1_decil_endeudamiento.om_c_mediana)",
+              "nativeQueryRef": "Sum of om_c_mediana",
+              "displayName": "Margen operacional mediano",
+              "format": "0.0%"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "categoryAxis": [
+        {
+          "properties": {
+            "axisType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Categorical'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Rentabilidad mediana por decil de endeudamiento (1 = menos deuda)'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "13D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

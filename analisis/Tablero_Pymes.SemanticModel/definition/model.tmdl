@@ -1,0 +1,28 @@
+model Model
+	culture: es-ES
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-CO
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["CarpetaProyecto","LeerCSV","fact_panel","dim_empresa","dim_sector","m_e4_alerta_temprana","u05_zonas_por_anio","u06_transicion_total","u03_descriptiva","b_b2_cuadrantes_riesgo","b_d4_zonas_sector","b_c1_decil_endeudamiento"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table fact_panel
+ref table dim_empresa
+ref table dim_sector
+ref table m_e4_alerta_temprana
+ref table u05_zonas_por_anio
+ref table u06_transicion_total
+ref table u03_descriptiva
+ref table b_b2_cuadrantes_riesgo
+ref table b_d4_zonas_sector
+ref table b_c1_decil_endeudamiento
+
+ref cultureInfo es-ES
+

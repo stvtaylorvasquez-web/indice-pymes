@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "18ae52ffef05ff8172f0",
+  "position": {
+    "x": 1532,
+    "y": 186,
+    "z": 7000,
+    "height": 130,
+    "width": 360,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_panel"
+                    }
+                  },
+                  "Property": "ROA mediano"
+                }
+              },
+              "queryRef": "fact_panel.ROA mediano",
+              "nativeQueryRef": "ROA mediano",
+              "displayName": "ROA mediano"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,160 @@
+# Z' y transiciones
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Z' de Altman", "Persistencia, transiciones y sectores",
+  html`El Z' resume cinco razones financieras en un puntaje de riesgo. Aquí se ve cómo evoluciona cada zona,
+  cuántas empresas cambian de zona de un año a otro y qué sectores concentran el riesgo. Filtro actual: <b>${textoFiltro}</b>.`)
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Evolución de las zonas del Z'"
+{
+  const filas = porAnio.flatMap(p => [{anio: p.anio, zona: "D", v: p.dist}, {anio: p.anio, zona: "G", v: p.gris}, {anio: p.anio, zona: "S", v: p.segura}])
+    .filter(d => Number.isFinite(d.v)).map(d => ({...d, nombre: nomZona.get(d.zona)}))
+  const ult = filas.filter(d => d.anio === anioMax)
+  const plot = Plot.plot({
+    width: anchoMedio, height: 330, marginLeft: 44, marginRight: 110, style: estilo,
+    x: {label: null, tickFormat: d => String(d), ticks: anios.length},
+    y: {label: null, tickFormat: fPct0, grid: true, domain: [0, Math.max(0.6, d3.max(filas, d => d.v) ?? 0.6)]},
+    color: {domain: ZONAS.map(z => z.k), range: ZONAS.map(z => z.color)},
+    marks: [
+      Plot.ruleX([foco], {stroke: "#F8CD00", strokeWidth: 2}),
+      Plot.lineY(filas, {x: "anio", y: "v", stroke: "zona", strokeWidth: 2.5, curve: "monotone-x"}),
+      Plot.dot(filas, {x: "anio", y: "v", fill: "zona", r: 3}),
+      Plot.text(ult, {x: "anio", y: "v", text: d => `${d.nombre} ${fPct(d.v)}`, dx: 8, textAnchor: "start", fill: "zona", fontWeight: 700, fontSize: 11.5}),
+      Plot.tip(filas, Plot.pointerX({x: "anio", y: "v", title: d => `${d.anio} · ${d.nombre}: ${fPct(d.v)}`, fontSize: 12}))
+    ]
+  })
+  return conPNG(html`<div class="subtitulo">Porcentaje de empresas en cada zona, año a año. La línea amarilla marca ${foco}.</div>${plot}`, "evolucion_zonas")
+}
+```
+
+```{ojs}
+//| title: "Distribución del Z' entre las empresas"
+{
+  const pts = base.filter(d => d.anio === foco && Number.isFinite(d.z)).map(d => ({...d, zc: Math.max(-2, Math.min(8, d.z))}))
+  const plot = Plot.plot({
+    width: anchoMedio, height: 330, marginLeft: 48, style: estilo,
+    x: {label: "Z' de Altman (valores extremos recortados a −2 y 8) →", domain: [-2, 8], tickFormat: d => loc.format(",")(d)},
+    y: {label: "↑ Empresas", grid: true},
+    color: {domain: ZONAS.map(z => z.k), range: ZONAS.map(z => z.color)},
+    marks: [
+      Plot.rectY(pts, Plot.binX({y: "count"}, {x: "zc", fill: "zona", thresholds: d3.range(-2, 8.01, 0.25), insetLeft: 0.5, insetRight: 0.5, tip: {fontSize: 12}})),
+      Plot.ruleX([1.23, 2.9], {stroke: "#14213D", strokeDasharray: "4 3"}),
+      Plot.text([{x: 1.23, t: "1,23"}, {x: 2.9, t: "2,9"}], {x: "x", text: "t", frameAnchor: "top", dy: 4, dx: 4, textAnchor: "start", fontWeight: 700, fill: "#14213D"}),
+      Plot.ruleX([d3.median(pts, d => d.z)], {stroke: "#F8CD00", strokeWidth: 3}),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`${leyenda(ZONAS)}<div class="subtitulo">${fEnt(pts.length)} empresas en ${foco}. La línea amarilla es la mediana (${fDec(d3.median(pts, d => d.z))}).</div>${plot}`, "distribucion_z")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Movilidad entre zonas: ¿a dónde pasan las empresas al año siguiente?"
+{
+  const pe = porEmpresa(base)
+  const cuenta = new Map()
+  for (const m of pe.values()) for (const [a, d0] of m) {
+    const d1 = m.get(a + 1)
+    if (!d0.zona || !d1 || !d1.zona) continue
+    if (anio !== "*" && a + 1 !== anio) continue
+    cuenta.set(d0.zona + d1.zona, (cuenta.get(d0.zona + d1.zona) ?? 0) + 1)
+  }
+  if (anio === anioMin) return html`<p class="aviso">${anioMin} es el primer año del panel: elija un año posterior o "Todos".</p>`
+  const color = d3.scaleLinear().domain([0, 1]).range(["#EEF3FA", "#1E3D6E"]).interpolate(d3.interpolateLab)
+  const desde = anio === "*" ? "año t" : String(anio - 1), hacia = anio === "*" ? "año t+1" : String(anio)
+  const filas = ZONAS.map(z0 => {
+    const tot = d3.sum(ZONAS, z1 => cuenta.get(z0.k + z1.k) ?? 0)
+    return {z0, tot, celdas: ZONAS.map(z1 => { const n = cuenta.get(z0.k + z1.k) ?? 0; return {n, p: tot ? n / tot : 0} })}
+  })
+  const gd = filas[1].tot ? filas[1].celdas[0].p : null
+  const ds = filas[0].tot ? filas[0].celdas[0].p : null
+  return html`<div class="subtitulo">Cada fila suma 100%: de las empresas que estaban en una zona en ${desde}, qué porcentaje quedó en cada zona en ${hacia}.</div>
+  <table class="matriz">
+    <tr><th></th><th colspan="3">${hacia} →</th></tr>
+    <tr><th class="fila">${desde} ↓</th>${ZONAS.map(z => html`<th><span style="color:${z.color}">●</span> ${z.nombre}</th>`)}</tr>
+    ${filas.map(f => html`<tr><th class="fila"><span style="color:${f.z0.color}">●</span> ${f.z0.nombre}</th>
+      ${f.celdas.map(c => html`<td style="background:${color(c.p)};color:${c.p > 0.45 ? "#fff" : "#14213D"}"
+        title="${fEnt(c.n)} empresas">${fPct(c.p)}<small>${fEnt(c.n)}</small></td>`)}</tr>`)}
+  </table>
+  <div class="lectura">
+    ${ds !== null ? html`<p><b>Persistencia:</b> ${fPct(ds)} de las empresas en Distress en ${desde} seguía en Distress en ${hacia}.</p>` : ""}
+    ${gd !== null ? html`<p><b>Deterioro:</b> ${fPct(gd)} de las empresas en zona Gris en ${desde} cayó a Distress en ${hacia}.</p>` : ""}
+  </div>`
+}
+```
+
+```{ojs}
+//| title: "Riesgo por sector"
+{
+  const pe = porEmpresa(datos.filter(d => depto === "*" || d.dep === depto))
+  const ultimo = vistaZ === "t1" && anio === anioMax
+  const fuenteT = ultimo ? datos.filter(d => depto === "*" || d.dep === depto) : selSinSec
+  const grupos = d3.group(fuenteT.filter(d => d.zona), d => d.sec)
+  const filas = Array.from(grupos, ([s, rows]) => {
+    let n = 0, k = 0
+    for (const d of rows) { if (d.zona === "D") continue
+      const s1 = pe.get(d.nit)?.get(d.anio + 1); if (s1 && s1.zona) { n++; if (s1.zona === "D") k++ } }
+    return {sec: s, sector: nomSector.get(s) ?? s, empresas: new Set(rows.map(d => d.nit)).size,
+            hoy: rows.filter(d => d.zona === "D").length / rows.length, t1: n ? k / n : NaN, nT1: n}
+  }).filter(d => d.empresas >= 30)
+  const v = vistaZ
+  const lista = filas.filter(d => Number.isFinite(d[v])).sort((a, b) => b[v] - a[v])
+  const plot = Plot.plot({
+    width: anchoMedio, height: Math.max(220, lista.length * 26 + 40), marginLeft: anchoMedio < 480 ? 150 : 190, marginRight: 52, style: estilo,
+    x: {label: null, percent: true, tickFormat: d => d + "%", grid: true, ticks: 4},
+    y: {label: null, domain: lista.map(d => d.sector), tickSize: 0},
+    marks: [
+      Plot.barX(lista, {y: "sector", x: v, insetTop: 4, insetBottom: 4,
+        fill: d => sector === "*" ? (v === "hoy" ? "#D03B3B" : "#E8703A") : d.sec === sector ? "#F8CD00" : (v === "hoy" ? "#EBB1AB" : "#F3C2A6")}),
+      Plot.text(lista, {y: "sector", x: v, text: d => fPct(d[v]), dx: 6, textAnchor: "start", fill: "#4A5468", fontSize: 11}),
+      Plot.ruleX([0], {stroke: "#C8CDD8"}),
+      Plot.tip(lista, Plot.pointerY({y: "sector", x: v, fontSize: 12,
+        title: d => `${d.sector}\nEn Distress hoy: ${fPct(d.hoy)}\nCae a Distress al año siguiente: ${Number.isFinite(d.t1) ? fPct(d.t1) : "–"}\n${fEnt(d.empresas)} empresas · clic para filtrar`}))
+    ]
+  })
+  plot.style.cursor = "pointer"
+  plot.addEventListener("click", () => { const f = plot.value; if (f) fijar(viewof sector, sector === f.sec ? "*" : f.sec) })
+  return conPNG(html`${viewof vistaZ}<div class="subtitulo">${v === "hoy" ? "Porcentaje de empresas del sector en zona Distress" : "De las empresas en zona Gris o Segura, porcentaje que cae a Distress al año siguiente"}
+    · ${anio === "*" || ultimo ? "todos los años" : anio}. Sectores con al menos 30 empresas.</div>
+    ${ultimo ? html`<p class="aviso">${anioMax} es el último corte y aún no tiene año siguiente: se muestran todos los años.</p>` : ""}${plot}`, "riesgo_por_sector")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Cuántos años seguidos pasan las empresas en Distress?"
+{
+  const pe = porEmpresa(base)
+  const rachas = []
+  for (const m of pe.values()) {
+    let max = 0, act = 0
+    for (const a of anios) { const d = m.get(a); if (d && d.zona === "D") { act++; max = Math.max(max, act) } else act = 0 }
+    rachas.push(max)
+  }
+  const filas = d3.range(0, anios.length + 1).map(k => ({k, n: rachas.filter(r => r === k).length}))
+  const tot = rachas.length, nunca = filas[0].n, cronicas = d3.sum(filas.filter(d => d.k >= 5), d => d.n)
+  const plot = Plot.plot({
+    width: anchoCompleto, height: 240, marginLeft: 48, style: estilo,
+    x: {type: "band", label: "Máximo de años consecutivos en zona Distress (2016–2025) →"},
+    y: {label: "↑ Empresas", grid: true},
+    marks: [
+      Plot.barY(filas, {x: "k", y: "n", fill: d => d.k === 0 ? "#2C5697" : d.k >= 5 ? "#B42318" : "#E8836F", insetLeft: 4, insetRight: 4,
+        tip: {format: {x: d => `${d} años`, y: fEnt}, fontSize: 12}}),
+      Plot.text(filas, {x: "k", y: "n", text: d => d.n ? fPct0(d.n / tot) : "", dy: -6, lineAnchor: "bottom", fontSize: 11, fill: "#4A5468"}),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`<div class="subtitulo"><b>${fPct(nunca / tot)}</b> de las empresas nunca estuvo en Distress; <b>${fPct(cronicas / tot)}</b>
+    estuvo 5 años o más seguidos (Distress crónico). Panel completo con el filtro de sector y departamento.</div>${plot}`, "rachas_distress")
+}
+```

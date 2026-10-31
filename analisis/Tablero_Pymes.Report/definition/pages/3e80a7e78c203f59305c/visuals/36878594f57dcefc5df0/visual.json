@@ -1,0 +1,275 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "36878594f57dcefc5df0",
+  "position": {
+    "x": 20,
+    "y": 626,
+    "z": 4000,
+    "height": 434,
+    "width": 1880,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "variable"
+                }
+              },
+              "queryRef": "u03_descriptiva.variable",
+              "nativeQueryRef": "variable",
+              "displayName": "Variable"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "grupo"
+                }
+              },
+              "queryRef": "u03_descriptiva.grupo",
+              "nativeQueryRef": "grupo",
+              "displayName": "Grupo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "n"
+                }
+              },
+              "queryRef": "u03_descriptiva.n",
+              "nativeQueryRef": "n",
+              "displayName": "N",
+              "format": "#,0"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "pct_na"
+                }
+              },
+              "queryRef": "u03_descriptiva.pct_na",
+              "nativeQueryRef": "pct_na",
+              "displayName": "% faltantes",
+              "format": "0.0"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "p25"
+                }
+              },
+              "queryRef": "u03_descriptiva.p25",
+              "nativeQueryRef": "p25",
+              "displayName": "P25",
+              "format": "0.000"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "mediana"
+                }
+              },
+              "queryRef": "u03_descriptiva.mediana",
+              "nativeQueryRef": "mediana",
+              "displayName": "Mediana",
+              "format": "0.000"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "p75"
+                }
+              },
+              "queryRef": "u03_descriptiva.p75",
+              "nativeQueryRef": "p75",
+              "displayName": "P75",
+              "format": "0.000"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "riq"
+                }
+              },
+              "queryRef": "u03_descriptiva.riq",
+              "nativeQueryRef": "riq",
+              "displayName": "Rango intercuartílico",
+              "format": "0.000"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "media_w"
+                }
+              },
+              "queryRef": "u03_descriptiva.media_w",
+              "nativeQueryRef": "media_w",
+              "displayName": "Media (winsorizada)",
+              "format": "0.000"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "u03_descriptiva"
+                    }
+                  },
+                  "Property": "sd_w"
+                }
+              },
+              "queryRef": "u03_descriptiva.sd_w",
+              "nativeQueryRef": "sd_w",
+              "displayName": "Desv. estándar (winsorizada)",
+              "format": "0.000"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Estadística descriptiva de todos los indicadores (2016-2025)'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "13D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "f_p2_desc",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "u03_descriptiva"
+              }
+            },
+            "Property": "dimension"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "f",
+              "Entity": "u03_descriptiva",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "f"
+                          }
+                        },
+                        "Property": "dimension"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "'todas'"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
