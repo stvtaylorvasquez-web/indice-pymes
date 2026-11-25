@@ -19,7 +19,7 @@
     <h2>${cuando}, ${fPct(actual.dist)} de las ${fEnt(actual.n)} empresas${ambito}
         estaba en zona de Distress.</h2>
     <p>${tend} El Distress es una señal contable de deterioro, no una quiebra observada.</p>
-  </div><div class="hero-logos"><img class="logo-odin" src="assets/odin-logo-blanco.svg" alt="ODIN · Observatorio de Investigación">
+  </div><div class="hero-logos"><img class="logo-odin" src="assets/odin-logo-blanco.png" alt="ODIN · Observatorio de Desarrollo, Innovación y Negocios">
     <span class="separador"></span><img class="hero-logo" src="assets/logo-javeriana-cali-blanco.png" alt="Pontificia Universidad Javeriana Cali"></div></div>`
 }
 ```

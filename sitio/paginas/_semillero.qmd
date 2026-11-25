@@ -1,18 +1,58 @@
-# Semillero
+# ¿Quiénes somos?
 
 ## Row {height="auto"}
 
 ```{ojs}
 //| padding: 0
 html`<div class="odin-portada">
-  <img src="assets/odin-logo-color.svg" alt="ODIN · Observatorio de Investigación">
+  <img src="assets/odin-logo.png" alt="ODIN · Observatorio de Desarrollo, Innovación y Negocios">
   <div>
     <div class="kicker">Semillero de Investigación Pensamiento y Praxis · Pontificia Universidad Javeriana Cali</div>
-    <h2>Quiénes somos y en qué trabajamos</h2>
-    <p><b>ODIN</b> es el observatorio de investigación del semillero. Su primer producto es este
-    <b>Índice de Salud Financiera PYME</b>: datos abiertos de ${fEnt(meta.empresas)} sociedades colombianas para investigadores,
-    estudiantes y cualquier persona interesada. Aquí se presentan las líneas de trabajo de los semilleristas y los eventos en los que hemos participado.</p>
-  </div></div>`
+    <h2>ODIN · Observatorio de Desarrollo, Innovación y Negocios</h2>
+    <p class="lema">Transformando datos en inteligencia para la competitividad.</p>
+  </div>
+  <img class="portada-javeriana" src="assets/logo-javeriana-cali-azul.png" alt="Pontificia Universidad Javeriana Cali">
+</div>`
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+html`<div class="mision-vision">
+  <article><div class="mv-etiqueta">Misión</div>
+    <p>ODIN es el observatorio del Semillero de Investigación Pensamiento y Praxis de la Pontificia Universidad Javeriana Cali.
+    Su misión es transformar datos abiertos en conocimiento útil para la toma de decisiones. Analiza la salud financiera,
+    la generación de valor, el riesgo y la competitividad de las empresas, los sectores y los territorios de Colombia,
+    con énfasis en las pymes y en el suroccidente del país. Lo hace con rigor académico y con herramientas de analítica y
+    benchmarking de libre acceso. Fiel a la formación integral y al espíritu de servicio de la Javeriana, conecta a estudiantes,
+    profesores, empresas y comunidad en una red de conocimiento que contribuye al desarrollo sostenible de la región.</p></article>
+  <article><div class="mv-etiqueta">Visión</div>
+    <p>En 2030, ODIN será un referente regional y nacional en inteligencia empresarial basada en datos. Será reconocido por
+    la calidad, la apertura y la utilidad de sus indicadores, por formar investigadores capaces de convertir la evidencia en
+    decisiones y por articular universidad, empresa y territorio en torno a la innovación y la competitividad.</p></article>
+</div>`
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Líderes del semillero y del observatorio"
+html`<div class="lideres">${lideres.map(l => html`<figure class="lider">
+  <img src="semillero/${l.archivo}" alt="${l.nombre}" loading="lazy">
+  <figcaption><b>${l.nombre}</b><span>${l.cargo}</span></figcaption>
+</figure>`)}</div>`
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Eventos en los que hemos participado"
+html`<div class="subtitulo">Haga clic en una foto para verla en tamaño completo.</div>
+<div class="galeria">${eventos.map(e => html`<figure class="foto">
+  <a href="semillero/${e.archivo}" target="_blank" rel="noopener"><img src="semillero/${e.archivo}" alt="${e.titulo}" loading="lazy"></a>
+  <figcaption><b>${e.titulo}</b>${e.detalle ? html`<span>${e.detalle}</span>` : ""}${e.fecha ? html`<small>${e.fecha}</small>` : ""}</figcaption>
+</figure>`)}</div>`
 ```
 
 ## Row {height="auto"}
@@ -30,15 +70,4 @@ html`<div class="odin-portada">
     <div class="integrantes">${t.integrantes.split(";").map(n => html`<span><i>●</i>${n.trim()}</span>`)}</div>
   </article>`)}</div>`
 }
-```
-
-## Row {height="auto"}
-
-```{ojs}
-//| title: "Eventos en los que hemos participado"
-html`<div class="subtitulo">Haga clic en una foto para verla en tamaño completo.</div>
-<div class="galeria">${eventos.map(e => html`<figure class="foto">
-  <a href="semillero/${e.archivo}" target="_blank" rel="noopener"><img src="semillero/${e.archivo}" alt="${e.titulo}" loading="lazy"></a>
-  <figcaption><b>${e.titulo}</b>${e.detalle ? html`<span>${e.detalle}</span>` : ""}${e.fecha ? html`<small>${e.fecha}</small>` : ""}</figcaption>
-</figure>`)}</div>`
 ```

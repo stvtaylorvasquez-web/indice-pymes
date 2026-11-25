@@ -1,6 +1,6 @@
 # ODIN · Salud Financiera PYME · Colombia 2016–2025
 
-Primer producto de **ODIN**, el observatorio de investigación del Semillero de Investigación Pensamiento y Praxis
+Primer producto de **ODIN · Observatorio de Desarrollo, Innovación y Negocios**, del Semillero de Investigación Pensamiento y Praxis
 (Pontificia Universidad Javeriana Cali): un tablero público sobre la salud financiera de las sociedades que reportan
 a la Superintendencia de Sociedades bajo NIIF para Pymes.
 
@@ -22,7 +22,7 @@ indice-pymes/
 │   ├── estilo.scss              Colores y tipografía institucional
 │   ├── paginas/                 Una pestaña por archivo
 │   ├── datos/                   Datos del tablero (los escribe el script 05)
-│   ├── semillero/               trabajos.csv, eventos.csv y fotos de eventos
+│   ├── semillero/               trabajos.csv, eventos.csv, lideres.csv y sus fotos
 │   └── assets/                  Logos de ODIN y de la Javeriana
 └── .github/                   Publicación automática en GitHub Pages (no tocar)
 ```
@@ -40,7 +40,7 @@ indice-pymes/
 
 | Pestaña | Archivo |
 |---|---|
-| Semillero | `paginas/_semillero.qmd` (contenido en `sitio/semillero/`) |
+| ¿Quiénes somos? | `paginas/_semillero.qmd` (misión, visión, líderes, trabajos y eventos; contenido en `sitio/semillero/`) |
 | Panorama | `paginas/_panorama.qmd` |
 | Indicadores | `paginas/_indicadores.qmd` |
 | Inductores | `paginas/_inductores.qmd` |
@@ -56,7 +56,7 @@ indice-pymes/
 `{{< include paginas/_nueva.qmd >}}` al final de `sitio/index.qmd`, en el orden en que debe aparecer.
 
 **Semillero:** los trabajos se editan en `sitio/semillero/trabajos.csv` (integrantes separados por punto y coma) y los eventos
-en `sitio/semillero/eventos.csv`. Cada foto (JPG, máximo 1400 px) va en la misma carpeta `sitio/semillero/`.
+en `sitio/semillero/eventos.csv` y los líderes en `sitio/semillero/lideres.csv`. Cada foto (JPG, máximo 1400 px) va en la misma carpeta `sitio/semillero/`.
 
 ### Reglas para programar tarjetas
 
@@ -64,6 +64,8 @@ en `sitio/semillero/eventos.csv`. Cada foto (JPG, máximo 1400 px) va en la mism
 - Filtros: `anio`, `sector`, `depto`. Funciones: `resumen()`, `conPNG()`, `botonesDescarga()`, `fijar()`.
 - Todo `Plot.plot` lleva `width` y `height` (`anchoMedio`, `anchoCompleto`, `anchoTercio`).
 - No escribir una celda como `x = ({...})` (usar `Object.assign({}, {...})`); cada celda `//| output: false` define una sola variable.
+
+**Filtros por pestaña:** la barra «Explorar» se oculta en las pestañas listadas en `PESTANAS_SIN_FILTROS` (encabezado de `sitio/index.qmd`).
 
 ## Opciones del script 05
 
@@ -75,4 +77,4 @@ en `sitio/semillero/eventos.csv`. Cada foto (JPG, máximo 1400 px) va en la mism
 - Panel balanceado: 7.772 sociedades que reportaron los 10 años (posible sesgo de supervivencia).
 - "Distress" es la zona de riesgo del Z' de Altman (Z' < 1,23), una señal contable. **No es quiebra observada.**
 - "Pymes" se refiere al marco contable NIIF Grupo 2, no al tamaño legal de la empresa (Decreto 957 de 2019).
-- Logos: el de la Javeriana es el oficial (`assets/logo-javeriana-cali*.png`); el de ODIN está en `assets/odin-*.svg`.
+- Logos: el de la Javeriana es el oficial (`assets/logo-javeriana-cali*.png`); el de ODIN está en `assets/odin-*.png` (logo, versión blanca e ícono).

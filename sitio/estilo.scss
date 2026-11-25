@@ -295,12 +295,12 @@ form.oi-3a86ea-table, .card form[class*="-table"] { font-size: .82rem; }
 .tabla-lideres tr.mediana td { color: $tinta-2; font-style: italic; border-top: 2px solid $linea; }
 // Logos ODIN + Javeriana en el encabezado
 .hero-logos { display: flex; align-items: center; gap: 1.1rem; flex: 0 0 auto; position: relative; z-index: 1; }
-.hero-logos .logo-odin { height: 72px; width: auto; }
+.hero-logos .logo-odin { height: 118px; width: auto; }
 .hero-logos .hero-logo { margin: 0; }
 .hero-logos .separador { width: 1px; height: 84px; background: rgba(255,255,255,.35); }
 .navbar .navbar-logo { min-height: 0 !important; max-height: 40px !important; height: 40px; border-radius: 8px; }
-@media (max-width: 992px) { .hero-logos .logo-odin { height: 54px; } .hero-logos .separador { height: 60px; } }
-@media (max-width: 576px) { .hero-logos { gap: .7rem; } .hero-logos .logo-odin { height: 44px; } .hero-logos .hero-logo { height: 80px !important; } }
+@media (max-width: 992px) { .hero-logos .logo-odin { height: 92px; } .hero-logos .separador { height: 60px; } }
+@media (max-width: 576px) { .hero-logos { gap: .7rem; } .hero-logos .logo-odin { height: 74px; } .hero-logos .hero-logo { height: 80px !important; } }
 // Pestaña Semillero
 .odin-portada { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid $linea;
   border-left: 6px solid $jav-amarillo; border-radius: 14px; padding: 1.3rem 1.6rem; }
@@ -334,3 +334,70 @@ body.sin-filtros .bslib-sidebar-layout > aside.sidebar,
 body.sin-filtros .bslib-sidebar-layout > .collapse-toggle { display: none !important; }
 body.sin-filtros .bslib-sidebar-layout { grid-template-columns: minmax(0, 1fr) !important; }
 body.sin-filtros .bslib-sidebar-layout > .main { grid-column: 1 / -1 !important; }
+
+// ---- ¿Quiénes somos?: lema, símbolo, misión/visión y líderes ---------------------
+.odin-portada img { height: 190px; }
+.odin-portada .lema { font-style: italic; color: $jav-azul; font-weight: 600; font-size: 1rem; margin: 0 0 .6rem; }
+.odin-portada p + p { margin-top: .55rem; }
+.odin-portada .simbolo span { color: #00B5DB; font-size: 1.1rem; }
+@media (max-width: 576px) { .odin-portada img { height: 140px; margin: 0 auto; } }
+.mision-vision { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+.mision-vision article { background: #fff; border: 1px solid $linea; border-top: 4px solid $jav-azul; border-radius: 10px; padding: 1.1rem 1.3rem; }
+.mision-vision article:last-child { border-top-color: $jav-amarillo; }
+.mision-vision .mv-etiqueta { font-family: $headings-font-family; font-weight: 700; color: $jav-azul-osc; font-size: 1.15rem; margin-bottom: .4rem; }
+.mision-vision p { margin: 0; color: $tinta-2; font-size: .9rem; line-height: 1.55; }
+.lideres { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.1rem; }
+.lider { margin: 0; background: #fff; border: 1px solid $linea; border-radius: 10px; overflow: hidden; }
+.lider img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+.lider figcaption { padding: .7rem .85rem .85rem; display: flex; flex-direction: column; gap: .2rem; }
+.lider figcaption b { color: $jav-azul-osc; font-size: .95rem; line-height: 1.25; }
+.lider figcaption span { color: $tinta-2; font-size: .8rem; line-height: 1.35; }
+
+// ---- Barra superior: logo Javeriana + ícono ODIN --------------------------------
+.navbar .navbar-javeriana { height: 55px; width: auto; border-radius: 4px; flex: 0 0 auto; }
+.navbar .navbar-sep { width: 1px; height: 40px; background: rgba(255,255,255,.4); flex: 0 0 auto; }
+.navbar .navbar-logo { border-radius: 0 !important; }
+@media (max-width: 576px) { .navbar .navbar-javeriana { height: 44px; } .navbar .navbar-sep { height: 32px; } }
+.navbar .navbar-title, .navbar .navbar-title-text, .navbar .navbar-title a { white-space: nowrap; }
+@media (min-width: 992px) and (max-width: 1500px) { .navbar .navbar-title { font-size: 1rem !important; } .navbar .navbar-brand-container { gap: .6rem; } }
+@media (min-width: 900px) { .lideres { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.lider img { max-height: 320px; }
+@media (min-width: 992px) and (max-width: 1600px) {
+  .navbar .nav-link { font-size: .8rem !important; padding-left: .36rem !important; padding-right: .36rem !important; }
+  .navbar .navbar-javeriana { height: 48px; }
+  .navbar .navbar-logo { height: 34px !important; max-height: 34px !important; }
+}
+@media (max-width: 991.98px) {
+  .navbar .navbar-title, .navbar .navbar-title-text, .navbar .navbar-title a { white-space: normal; }
+  .navbar .navbar-title { font-size: .95rem !important; line-height: 1.15; }
+  .navbar .navbar-brand-container { min-width: 0; flex: 1 1 auto; gap: .5rem; }
+}
+@media (max-width: 576px) { .navbar .navbar-logo { height: 30px !important; max-height: 30px !important; margin-right: .2rem; } }
+@media (min-width: 992px) and (max-width: 1519.98px) { .navbar .navbar-title { display: none !important; } }
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .navbar .nav-link { font-size: .74rem !important; padding-left: .26rem !important; padding-right: .26rem !important; letter-spacing: 0 !important; }
+  .navbar .navbar-javeriana { height: 42px; }
+}
+@media (min-width: 992px) and (max-width: 1099.98px) { .navbar .navbar-sep { display: none; } .navbar .navbar-logo { display: none !important; } }
+@media (max-width: 991.98px) { body.sin-filtros .bslib-sidebar-layout > .main { padding-left: .7rem !important; } }
+// Portada ¿Quiénes somos?: ODIN a la izquierda, Javeriana a la derecha
+.odin-portada .portada-javeriana { height: 150px; width: auto; border-radius: 8px; margin-left: auto; }
+.odin-portada .lema { font-size: 1.1rem; margin: .2rem 0 0; }
+@media (max-width: 576px) { .odin-portada .portada-javeriana { height: 110px; margin: 0 auto; } }
+// Logos de la barra más grandes y nítidos
+.navbar .navbar-javeriana { height: 62px !important; border-radius: 0; }
+.navbar .navbar-logo { height: 46px !important; max-height: 46px !important; }
+.navbar .navbar-sep { height: 46px; }
+@media (min-width: 992px) and (max-width: 1199.98px) { .navbar .navbar-javeriana { height: 54px !important; } }
+@media (max-width: 576px) { .navbar .navbar-javeriana { height: 50px !important; } .navbar .navbar-logo { height: 36px !important; max-height: 36px !important; } }
+// Portada centrada y nombres de integrantes más livianos
+.odin-portada > div { text-align: center; }
+.odin-portada h2 { border-bottom: 0; padding-bottom: 0; }
+.odin-portada .portada-javeriana { border-radius: 0; height: 140px; }
+.integrantes span { font-weight: 400 !important; color: #1F2430 !important; }
+.lider figcaption b { color: #1F2430 !important; font-weight: 500 !important; }
+// Pestañas repartidas en todo el ancho disponible (sin espacio sobrante a la derecha)
+@media (min-width: 992px) {
+  .navbar .navbar-collapse { flex: 1 1 auto; }
+  .navbar .navbar-collapse .navbar-nav { flex: 1 1 auto; justify-content: space-evenly; margin-right: 1rem !important; }
+}

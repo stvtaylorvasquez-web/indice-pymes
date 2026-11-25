@@ -3,15 +3,21 @@ title: "ODIN · Salud Financiera PYME"
 format:
   dashboard:
     theme: [cosmo, estilo.scss]
-    logo: assets/odin-sello-blanco.svg
+    logo: assets/odin-icono-blanco.png
     include-in-header:
       text: |
-        <link rel="icon" type="image/svg+xml" href="assets/odin-sello-color.svg">
+        <link rel="icon" type="image/png" href="assets/odin-icono.png">
         <script>
           // Oculta la barra de filtros "Explorar" en las pestañas que no usan filtros.
           // Para cambiar la lista, editar PESTANAS_SIN_FILTROS (id de la pestaña: "tab-" + nombre).
-          const PESTANAS_SIN_FILTROS = ["tab-semillero", "tab-empresas", "tab-metodología"];
+          const PESTANAS_SIN_FILTROS = ["tab-quiénes-somos", "tab-empresas", "tab-metodología"];
           document.addEventListener("DOMContentLoaded", () => {
+            // Logo de la Javeriana al inicio de la barra superior, visible en todas las pestañas
+            const marca = document.querySelector(".navbar-brand-container");
+            if (marca && !marca.querySelector(".navbar-javeriana")) {
+              marca.insertAdjacentHTML("afterbegin",
+                '<img class="navbar-javeriana" src="assets/logo-javeriana-cali-blanco.png" alt="Pontificia Universidad Javeriana Cali"><span class="navbar-sep"></span>');
+            }
             const actualizar = () => {
               const activa = document.querySelector(".navbar .nav-link.active");
               const sin = activa && PESTANAS_SIN_FILTROS.includes(activa.id);
@@ -54,6 +60,7 @@ tendencias = FileAttachment("datos/tendencias.csv").csv({typed: true})
 indVsZ = FileAttachment("datos/indicadores_vs_z.csv").csv({typed: true})
 trabajos = FileAttachment("semillero/trabajos.csv").csv()
 eventos = FileAttachment("semillero/eventos.csv").csv()
+lideres = FileAttachment("semillero/lideres.csv").csv()
 
 // ===================== FORMATOS (estilo colombiano: coma decimal) =====================
 loc  = d3.formatLocale({decimal: ",", thousands: ".", grouping: [3], currency: ["$", ""]})
