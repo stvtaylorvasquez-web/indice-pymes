@@ -1,8 +1,12 @@
 ---
-title: "Salud Financiera PYME · Colombia"
+title: "ODIN · Salud Financiera PYME"
 format:
   dashboard:
-    theme: [cosmo, estilos/javeriana.scss]
+    theme: [cosmo, estilo.scss]
+    logo: assets/odin-sello-blanco.svg
+    include-in-header:
+      text: |
+        <link rel="icon" type="image/svg+xml" href="assets/odin-sello-color.svg">
     scrolling: true
     nav-buttons:
       - icon: github
@@ -20,7 +24,7 @@ format:
 
 ```{ojs}
 //| output: false
-// ===================== DATOS (generados por analisis/06_exportar_web.R) =====================
+// ===================== DATOS (generados por analisis/05_exportar_web.R) =====================
 datos    = FileAttachment("datos/panel.csv").csv({typed: true})
 sectores = FileAttachment("datos/sectores.csv").csv()
 meta     = FileAttachment("datos/meta.json").json()
@@ -32,6 +36,8 @@ diccionario = FileAttachment("datos/diccionario.csv").csv()
 empresas = FileAttachment("datos/empresas.csv").csv({typed: true})
 tendencias = FileAttachment("datos/tendencias.csv").csv({typed: true})
 indVsZ = FileAttachment("datos/indicadores_vs_z.csv").csv({typed: true})
+trabajos = FileAttachment("semillero/trabajos.csv").csv()
+eventos = FileAttachment("semillero/eventos.csv").csv()
 
 // ===================== FORMATOS (estilo colombiano: coma decimal) =====================
 loc  = d3.formatLocale({decimal: ",", thousands: ".", grouping: [3], currency: ["$", ""]})
@@ -430,9 +436,51 @@ empresaFicha = {
 filasFicha = empresaFicha ? datos.filter(d => d.nit === empresaFicha.nit).sort((a, b) => a.anio - b.anio) : []
 ```
 
+```{ojs}
+//| output: false
+// Inductores de valor: tarifa de impuestos y costo de capital de referencia (editable en la pestaña)
+TASA_IMP = 0.35
+```
+
+```{ojs}
+//| output: false
+viewof costoCapitalPct = Inputs.range([6, 25], {value: 14, step: 0.5, label: "Costo de capital (Ko, % anual)"})
+```
+
+```{ojs}
+//| output: false
+costoCapital = costoCapitalPct / 100
+```
+
+```{ojs}
+//| output: false
+// Categoría de la palanca de crecimiento (PDC = margen / PKT)
+function catPDC(d) {
+  if (!Number.isFinite(d.om) || !Number.isFinite(d.pkt)) return null
+  if (d.om < 0) return "neg"
+  if (d.pkt <= 0) return "auto"
+  return d.om / d.pkt >= 1 ? "alta" : "baja"
+}
+```
+
+```{ojs}
+//| output: false
+function resumenInductores(rows) {
+  const conX3 = rows.filter(d => Number.isFinite(d.x3))
+  return {om: d3.median(rows, d => d.om), pkt: d3.median(rows, d => d.pkt),
+    pdc: d3.median(rows.filter(d => d.pkt > 0 && Number.isFinite(d.om)), d => d.om / d.pkt),
+    paf: d3.median(rows, d => d.paf), crec: d3.median(rows, d => d.crec),
+    creaValor: conX3.length ? conX3.filter(d => d.x3 * (1 - TASA_IMP) > costoCapital).length / conX3.length : NaN}
+}
+```
+
+{{< include paginas/_semillero.qmd >}}
+
 {{< include paginas/_panorama.qmd >}}
 
 {{< include paginas/_indicadores.qmd >}}
+
+{{< include paginas/_inductores.qmd >}}
 
 {{< include paginas/_liquidez.qmd >}}
 

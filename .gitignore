@@ -1,15 +1,12 @@
 # Base de datos original (pesada; se comparte por fuera de GitHub)
 analisis/*.xlsx
-# Salidas intermedias de R (se regeneran con 00_ejecutar_todo.R)
+# Salidas de R (se regeneran con 00_ejecutar_todo.R)
 analisis/resultados/
 analisis/*.rds
 analisis/*.csv
 analisis/.Rproj.user/
 .Rhistory
 .RData
-# Power BI
-**/.pbi/localSettings.json
-**/.pbi/cache.abf
 # Quarto (el sitio se construye en GitHub)
 sitio/_site/
 sitio/.quarto/

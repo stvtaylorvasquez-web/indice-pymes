@@ -64,6 +64,120 @@ encabezado("Ficha por empresa", "Busque una empresa y compárela con su sector",
 ## Row {height="auto"}
 
 ```{ojs}
+//| title: "Su región"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const ult = filasFicha.at(-1), dep = ult.dep
+  const delDep = datos.filter(d => d.anio === ult.anio && d.dep === dep && Number.isFinite(d.z))
+  const orden = delDep.slice().sort((a, b) => b.z - a.z)
+  const puesto = orden.findIndex(d => d.nit === ult.nit) + 1
+  const pais = datos.filter(d => d.anio === ult.anio)
+  const feats = geo.features.filter(f => f.properties.dep !== "SAN ANDRES Y PROVIDENCIA")
+  const conteo = d3.rollup(pais, v => v.length, d => d.dep)
+  const mapa = Plot.plot({
+    width: Math.min(300, anchoMedio * 0.45), height: Math.round(Math.min(300, anchoMedio * 0.45) * 1.15), margin: 2, style: estilo,
+    projection: {type: "mercator", domain: {type: "FeatureCollection", features: feats}},
+    marks: [
+      Plot.geo(feats, {fill: f => conteo.has(f.properties.dep) ? "#DDE5F2" : "#EEF0F4", stroke: "white", strokeWidth: 0.6}),
+      Plot.geo(feats.filter(f => f.properties.dep === dep), {fill: "#F8CD00", stroke: "#1E3D6E", strokeWidth: 1.5})
+    ]
+  })
+  const filaComp = (nombre, k, fmt) => {
+    const e = ult[k], md = d3.median(delDep, d => d[k]), mp = d3.median(pais, d => d[k])
+    return html`<tr><td>${nombre}</td><td><b>${Number.isFinite(e) ? fmt(e) : "–"}</b></td><td>${fmt(md)}</td><td>${fmt(mp)}</td></tr>`
+  }
+  const pct = puesto ? 1 - (puesto - 1) / orden.length : NaN
+  return html`<div class="region">
+    <div>${mapa}</div>
+    <div class="region-datos">
+      <div class="region-titulo">${nomDepto(dep)}</div>
+      <p>${fEnt(orden.length)} empresas del panel tienen domicilio en ${nomDepto(dep)} (${fPct(orden.length / pais.length)} del país).</p>
+      ${puesto ? html`<div class="puesto"><b>Puesto ${fEnt(puesto)}</b> de ${fEnt(orden.length)} por Z' en ${ult.anio}
+        <span class="${pct >= 0.5 ? "bien" : "mal"}">· mejor que el ${fPct0(1 - puesto / orden.length)} de las empresas de su región</span></div>` : ""}
+      <table class="tabla-simple"><tr><th>${ult.anio}</th><th>Empresa</th><th>Mediana ${nomDepto(dep)}</th><th>Mediana país</th></tr>
+        ${filaComp("Z' de Altman", "z", fDec)}${filaComp("ROA", "ra", fPct)}${filaComp("Margen operacional", "om", fPct)}
+        ${filaComp("Endeudamiento", "ti", fPct)}${filaComp("Razón corriente", "cr", x => fDec(x) + "×")}</table>
+    </div></div>`
+}
+```
+
+```{ojs}
+//| title: "Frente a los líderes de su sector"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const ult = filasFicha.at(-1)
+  const codEmp = new Map(empresas.map(d => [d.nit, d.ciiu_cod]))
+  const desc = new Map(empresas.map(d => [d.ciiu_cod, d.ciiu_desc]))
+  const cod = codEmp.get(ult.nit)
+  let grupo = datos.filter(d => d.anio === ult.anio && codEmp.get(d.nit) === cod && d.ing > 0)
+  let alcance = `actividad CIIU ${cod} (${desc.get(cod) ?? ""})`
+  if (grupo.length < 8) { grupo = datos.filter(d => d.anio === ult.anio && d.sec === ult.sec && d.ing > 0); alcance = `sector ${nomSector.get(ult.sec)}` }
+  const orden = grupo.slice().sort((a, b) => b.ing - a.ing)
+  const puesto = orden.findIndex(d => d.nit === ult.nit) + 1
+  const top = orden.slice(0, 5)
+  const filas = (top.some(d => d.nit === ult.nit) ? top : [...top, ult]).map(d => ({
+    Puesto: orden.findIndex(o => o.nit === d.nit) + 1, Empresa: String(nomEmpresa.get(d.nit) ?? d.nit), esta: d.nit === ult.nit,
+    Departamento: nomDepto(d.dep), Zona: d.zona, z: d.z, ra: d.ra, om: d.om, ti: d.ti, crec: d.crec}))
+  const f = (x, fmt) => Number.isFinite(x) ? fmt(x) : "–"
+  const medTop = (k) => d3.median(top, d => d[k])
+  const tabla = html`<table class="tabla-lideres">
+    <tr><th>#</th><th>Empresa</th><th>Zona</th><th>Z'</th><th>ROA</th><th>Margen op.</th><th>Endeud.</th><th>Crec. ingresos</th></tr>
+    ${filas.map(d => html`<tr class="${d.esta ? "esta" : ""}"><td>${d.Puesto}</td><td>${d.Empresa}<small>${d.Departamento}</small></td>
+      <td><span style="color:${colZona.get(d.Zona) ?? "#7A8294"}">●</span> ${nomZona.get(d.Zona) ?? "–"}</td>
+      <td>${f(d.z, fDec)}</td><td>${f(d.ra, fPct)}</td><td>${f(d.om, fPct)}</td><td>${f(d.ti, fPct)}</td><td>${f(d.crec, fPct)}</td></tr>`)}
+    <tr class="mediana"><td></td><td>Mediana del top 5</td><td></td><td>${f(medTop("z"), fDec)}</td><td>${f(medTop("ra"), fPct)}</td>
+      <td>${f(medTop("om"), fPct)}</td><td>${f(medTop("ti"), fPct)}</td><td>${f(medTop("crec"), fPct)}</td></tr>
+  </table>`
+  return html`<div class="subtitulo">Las 5 empresas con mayores ingresos de su ${alcance} en ${ult.anio}.
+    ${puesto ? html`Por tamaño, <b>${String(empresaFicha.razon_social)}</b> ocupa el <b>puesto ${fEnt(puesto)} de ${fEnt(orden.length)}</b>.` : ""}
+    La fila resaltada es la empresa consultada.</div>${tabla}`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Dónde se ubica dentro de su sector?"
+{
+  if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`
+  const ult = filasFicha.at(-1)
+  const delSector = datos.filter(d => d.anio === ult.anio && d.sec === ult.sec)
+  const IND = [
+    {k: "z", nombre: "Z' de Altman", fmt: fDec, mejorSiBaja: false}, {k: "ra", nombre: "ROA", fmt: fPct, mejorSiBaja: false},
+    {k: "om", nombre: "Margen operacional", fmt: fPct, mejorSiBaja: false}, {k: "cr", nombre: "Razón corriente", fmt: x => fDec(x) + "×", mejorSiBaja: false},
+    {k: "ti", nombre: "Endeudamiento", fmt: fPct, mejorSiBaja: true}, {k: "pkt", nombre: "PKT (capital de trabajo / ingresos)", fmt: fPct, mejorSiBaja: true},
+    {k: "crec", nombre: "Crecimiento de ingresos", fmt: fPct, mejorSiBaja: false}
+  ]
+  const filas = IND.map(i => {
+    const vals = delSector.map(d => d[i.k]).filter(Number.isFinite).sort((a, b) => a - b)
+    const v = ult[i.k]
+    if (!Number.isFinite(v) || !vals.length) return null
+    let p = d3.bisectLeft(vals, v) / vals.length
+    if (i.mejorSiBaja) p = 1 - p
+    return {...i, v, p, med: d3.median(vals), n: vals.length}
+  }).filter(Boolean)
+  const plot = Plot.plot({
+    width: anchoCompleto, height: filas.length * 44 + 50, marginLeft: 230, marginRight: 150, style: estilo,
+    x: {domain: [0, 1], label: "Percentil dentro del sector (100 = la mejor del sector en ese indicador) →", tickFormat: d => fEnt(Math.round(d * 100)), ticks: 5, grid: true},
+    y: {domain: filas.map(d => d.nombre), label: null, tickSize: 0},
+    marks: [
+      Plot.rect([{x1: 0, x2: 0.25}, {x1: 0.25, x2: 0.5}, {x1: 0.5, x2: 0.75}, {x1: 0.75, x2: 1}], {x1: "x1", x2: "x2", fill: (d, i) => ["#FDF0EE", "#FBF6EC", "#F0F5FB", "#E6EEF8"][i]}),
+      Plot.ruleY(filas, {y: "nombre", x1: 0, x2: 1, stroke: "#E2E6EE", strokeWidth: 6, strokeLinecap: "round"}),
+      Plot.ruleX([0.5], {stroke: "#7A8294", strokeDasharray: "3 3"}),
+      Plot.dot(filas, {y: "nombre", x: "p", r: 9, fill: d => d.p >= 0.5 ? "#2C5697" : "#D03B3B", stroke: "white", strokeWidth: 2}),
+      Plot.text(filas, {y: "nombre", x: 1, text: d => `${d.fmt(d.v)}  (sector ${d.fmt(d.med)})`, dx: 12, textAnchor: "start", fontSize: 11, fill: "#4A5468"}),
+      Plot.tip(filas, Plot.pointerY({y: "nombre", x: "p", fontSize: 12,
+        title: d => `${d.nombre}\nEmpresa: ${d.fmt(d.v)} · mediana del sector: ${d.fmt(d.med)}\nMejor que el ${fPct0(d.p)} de ${fEnt(d.n)} empresas del sector`}))
+    ]
+  })
+  return conPNG(html`<div class="subtitulo">Posición de la empresa frente a las ${fEnt(delSector.length)} empresas del sector ${nomSector.get(ult.sec)} en ${ult.anio}.
+    A la derecha de la línea punteada está mejor que la mitad del sector. En endeudamiento y PKT, más bajo cuenta como mejor.</div>${plot}`, "posicion_sector_" + empresaFicha.nit)
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
 //| title: "Trayectoria del Z' frente a su sector"
 {
   if (!empresaFicha || !filasFicha.length) return html`<p class="subtitulo">Elija una empresa.</p>`

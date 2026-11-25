@@ -20,3 +20,7 @@
 "x3","X3 Utilidad operacional / activo total"
 "x4","X4 Patrimonio / pasivo total"
 "x5","X5 Ventas / activo total"
+"pkt","PKT: (cuentas por cobrar + inventarios - proveedores) / ingresos"
+"paf","Ingresos / propiedades, planta y equipo"
+"crec","Crecimiento anual de los ingresos"
+"ing","Ingresos de actividades ordinarias (unidades de la base original)"

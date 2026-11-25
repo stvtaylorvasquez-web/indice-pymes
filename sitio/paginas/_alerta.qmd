@@ -1,4 +1,4 @@
-# Alerta 2026
+# Alerta
 
 ## Row {height="auto"}
 

@@ -1,0 +1,153 @@
+# Inductores
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+encabezado("Inductores de valor", "¿Qué hace que una empresa cree o destruya valor?",
+  html`Los inductores de valor son las palancas operativas que explican la rentabilidad y el valor de la empresa:
+  <b>margen</b>, <b>productividad del capital de trabajo (PKT)</b>, su relación o <b>palanca de crecimiento (PDC)</b>,
+  <b>productividad del activo fijo</b> y <b>crecimiento</b>. Al final se comparan con el <b>costo de capital</b> para estimar si la empresa
+  crea valor. Filtro actual: <b>${textoFiltro}</b>.`)
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+{
+  const r = resumenInductores(sel)
+  const kpi = (icono, label, valor, nota) => html`<div class="kpi"><div class="k-label"><span class="k-icono">${icono}</span>${label}</div>
+    <div class="k-valor">${valor}</div><div class="k-delta"><span>${nota}</span></div></div>`
+  return html`<div class="kpis kpis-6">
+    ${kpi("%", "Margen operacional", fPct(r.om), "Mediana · utilidad operativa / ingresos")}
+    ${kpi("⟳", "PKT", fPct(r.pkt), "Mediana · capital de trabajo / ingresos")}
+    ${kpi("⇡", "Palanca de crecimiento", fDec(r.pdc), "Mediana margen / PKT · > 1 es favorable")}
+    ${kpi("▤", "Productividad del activo fijo", fDec1(r.paf) + "×", "Mediana · ingresos / activo fijo")}
+    ${kpi("↗", "Crecimiento de ingresos", fPct(r.crec), "Mediana anual (nominal)")}
+    ${kpi("★", "Crean valor", fPct(r.creaValor), `Rentabilidad operativa > ${fPct0(costoCapital)}`)}
+  </div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Crean valor? Rentabilidad operativa frente al costo de capital"
+{
+  const filas = porAnio.map(p => {
+    const rows = base.filter(d => d.anio === p.anio && Number.isFinite(d.x3))
+    return {anio: p.anio, p: rows.length ? rows.filter(d => d.x3 * (1 - TASA_IMP) > costoCapital).length / rows.length : NaN,
+            rona: d3.median(rows, d => d.x3 * (1 - TASA_IMP))}
+  })
+  const plot = Plot.plot({
+    width: anchoMedio, height: 300, marginLeft: 44, style: estilo,
+    x: {type: "band", label: null, tickFormat: d => anchoMedio < 480 ? "’" + String(d).slice(2) : String(d), padding: 0.25},
+    y: {label: "↑ % de empresas que crean valor", tickFormat: fPct0, grid: true, domain: [0, Math.max(0.5, d3.max(filas, d => d.p) ?? 0.5)]},
+    marks: [
+      Plot.barY(filas, {x: "anio", y: "p", fill: d => (anio === "*" || d.anio === anio) ? "#2C5697" : "#B9C8E3",
+        channels: {"Rentabilidad operativa mediana": d => fPct(d.rona)}, tip: {format: {x: true, y: d => fPct(d), fill: false}, fontSize: 12}}),
+      Plot.text(filas, {x: "anio", y: "p", text: d => fPct0(d.p), dy: -6, lineAnchor: "bottom", fontSize: 11, fill: "#4A5468"}),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`<div class="controles-fila">${viewof costoCapitalPct}</div>
+    <div class="subtitulo">Una empresa <b>crea valor</b> cuando su rentabilidad operativa después de impuestos
+    (utilidad operacional × (1 − ${fPct0(TASA_IMP)}) / activo total) supera su costo de capital. Mueva el costo de capital para ver
+    cuántas empresas lo superan. Es una aproximación: usa el activo total y un mismo costo de capital para todas.</div>${plot}`, "crean_valor")
+}
+```
+
+```{ojs}
+//| title: "Palanca de crecimiento: ¿crecer genera o consume caja?"
+{
+  const CATS = [
+    {k: "neg", nombre: "Margen negativo", color: "#B42318"},
+    {k: "baja", nombre: "PDC < 1: crecer consume caja", color: "#E8836F"},
+    {k: "alta", nombre: "PDC ≥ 1: crecer libera caja", color: "#7FA3D6"},
+    {k: "auto", nombre: "Capital de trabajo ≤ 0: lo financian proveedores", color: "#2C5697"}
+  ]
+  const filas = porAnio.flatMap(p => {
+    const rows = base.filter(d => d.anio === p.anio && catPDC(d))
+    return CATS.map(c => { const n = rows.filter(d => catPDC(d) === c.k).length
+      return {anio: p.anio, cat: c.k, nombre: c.nombre, n, pct: rows.length ? n / rows.length : 0} })
+  })
+  const plot = Plot.plot({
+    width: anchoMedio, height: 300, marginLeft: 44, style: estilo,
+    x: {type: "band", label: null, tickFormat: d => anchoMedio < 480 ? "’" + String(d).slice(2) : String(d), padding: 0.18},
+    y: {label: null, percent: true, tickFormat: d => d + "%", grid: true, ticks: 5},
+    color: {domain: CATS.map(c => c.k), range: CATS.map(c => c.color)},
+    marks: [
+      Plot.barY(filas, Plot.stackY({order: CATS.map(c => c.k)}, {x: "anio", y: "pct", fill: "cat", stroke: "white", strokeWidth: 1.5,
+        fillOpacity: d => (anio === "*" || d.anio === anio) ? 1 : 0.5,
+        channels: {Grupo: "nombre", Empresas: d => fEnt(d.n), Participación: d => fPct(d.pct)},
+        tip: {format: {x: true, y: false, fill: false, Grupo: true, Empresas: true, Participación: true}, fontSize: 12}})),
+      Plot.ruleY([0], {stroke: "#C8CDD8"})
+    ]
+  })
+  return conPNG(html`${leyenda(CATS)}<div class="subtitulo">PDC = margen operacional / PKT. Si es mayor que 1, el margen alcanza para financiar
+    el capital de trabajo que exige crecer; si es menor, crecer obliga a buscar caja por fuera (deuda o aportes).</div>${plot}`, "palanca_crecimiento")
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Inductores de valor por sector (medianas)"
+{
+  const filas = Array.from(d3.group(selSinSec, d => d.sec), ([s, rows]) => { const r = resumenInductores(rows)
+      return {sec: s, Sector: nomSector.get(s) ?? s, Empresas: new Set(rows.map(d => d.nit)).size, Margen: r.om, PKT: r.pkt, PDC: r.pdc,
+              "Activo fijo": r.paf, Crecimiento: r.crec, "Crean valor": r.creaValor} })
+    .filter(d => d.Empresas >= 30).sort((a, b) => b["Crean valor"] - a["Crean valor"])
+  const ext = (k) => d3.extent(filas, d => d[k])
+  const celda = (k, fmt, color) => { const [a, b] = ext(k)
+    return (x) => { if (x == null || !Number.isFinite(x)) return "–"
+      const w = b > a ? Math.max(4, 100 * (x - Math.min(0, a)) / (b - Math.min(0, a))) : 50
+      return html`<div class="celda-barra"><i style="width:${w}%;background:${color}"></i><span>${fmt(x)}</span></div>` } }
+  const tabla = Inputs.table(filas, {
+    columns: ["Sector", "Empresas", "Crean valor", "Margen", "PKT", "PDC", "Activo fijo", "Crecimiento"],
+    header: {"Crean valor": `% crean valor (Ko ${fPct0(costoCapital)})`, Margen: "Margen op.", "Activo fijo": "Prod. activo fijo", Crecimiento: "Crec. ingresos"},
+    format: {Empresas: fEnt, "Crean valor": celda("Crean valor", fPct, "#CFE3D6"), Margen: celda("Margen", fPct, "#DDE5F2"),
+             PKT: celda("PKT", fPct, "#FBE3C7"), PDC: celda("PDC", fDec, "#DDE5F2"), "Activo fijo": celda("Activo fijo", x => fDec1(x) + "×", "#DDE5F2"),
+             Crecimiento: celda("Crecimiento", fPct, "#DDE5F2")},
+    width: {Sector: 200}, layout: "auto", rows: 20, multiple: false, value: filas.find(d => d.sec === sector), required: false
+  })
+  tabla.addEventListener("input", () => { const v = tabla.value; fijar(viewof sector, v ? v.sec : "*") })
+  return html`<div class="subtitulo">${anio === "*" ? "Todos los años" : anio}${depto === "*" ? "" : " · " + nomDepto(depto)} · sectores con al menos 30 empresas,
+    ordenados por % que crea valor. Clic en una fila para filtrar el tablero. PKT bajo es mejor (menos caja atrapada en cartera e inventario).</div>
+    ${tabla}<div class="acciones">${botonesDescarga(() => filas.map(({sec, ...r}) => ({seccion: sec, ...r})), "inductores_por_sector")}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "¿Qué inductor se asocia más con la rentabilidad?"
+{
+  const DRV = [
+    {k: "om", nombre: "Margen operacional", mejorSiBaja: false},
+    {k: "pkt", nombre: "PKT (capital de trabajo / ingresos)", mejorSiBaja: true},
+    {k: "paf", nombre: "Productividad del activo fijo", mejorSiBaja: false},
+    {k: "crec", nombre: "Crecimiento de ingresos", mejorSiBaja: false}
+  ]
+  const panel = (dr) => {
+    const rows = sel.filter(d => Number.isFinite(d[dr.k]) && Number.isFinite(d.ra))
+    const q = d3.scaleQuantile().domain(rows.map(d => d[dr.k])).range([1, 2, 3, 4, 5])
+    const filas = d3.range(1, 6).map(i => { const g = rows.filter(d => q(d[dr.k]) === i)
+      return {q: i, roa: d3.median(g, d => d.ra), crea: g.length ? g.filter(d => d.x3 * (1 - TASA_IMP) > costoCapital).length / g.length : NaN, n: g.length} })
+    return html`<div><h4>${dr.nombre}</h4>${Plot.plot({
+      width: anchoTercio, height: 190, marginLeft: 44, marginBottom: 34, style: Object.assign({}, estilo, {fontSize: "10.5px"}),
+      x: {type: "band", label: dr.mejorSiBaja ? "Quintil (1 = más bajo, mejor) →" : "Quintil (1 = más bajo) →", tickFormat: d => `Q${d}`},
+      y: {label: "↑ ROA mediano", grid: true, tickFormat: fPct0, ticks: 4},
+      marks: [
+        Plot.barY(filas, {x: "q", y: "roa", fill: d => d.roa >= 0 ? "#2C5697" : "#D03B3B", insetLeft: 4, insetRight: 4,
+          channels: {"% crean valor": d => fPct(d.crea), Observaciones: d => fEnt(d.n)}, tip: {format: {x: d => `Quintil ${d}`, y: d => fPct(d), fill: false}, fontSize: 12}}),
+        Plot.ruleY([0], {stroke: "#14213D", strokeOpacity: 0.5})
+      ]
+    })}</div>`
+  }
+  return html`<div class="subtitulo">Las empresas se ordenan en cinco grupos iguales (quintiles) según cada inductor y se mide el ROA mediano de cada grupo.
+    Cuanto más empinada la escalera, más pesa ese inductor en la rentabilidad. ${textoFiltro}.</div>
+    <div class="multiples cuatro">${DRV.map(panel)}</div>`
+}
+```

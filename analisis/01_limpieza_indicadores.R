@@ -31,7 +31,7 @@ Z_NA_SI_FALTA_ALGUN_X <- TRUE
 # Carpeta de salida: la misma del Excel
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) >= 1) RUTA_EXCEL <- args[1]
-CARPETA_SALIDA <- dirname(RUTA_EXCEL)
+CARPETA_SALIDA <- "resultados"   # todas las salidas de R quedan dentro de analisis/resultados
 if (length(args) >= 2) CARPETA_SALIDA <- args[2]
 
 suppressPackageStartupMessages(library(readxl))
@@ -217,6 +217,7 @@ dic <- data.frame(
 )
 
 # ---- 6. EXPORTAR --------------------------------------------------------------
+dir.create(CARPETA_SALIDA, showWarnings = FALSE, recursive = TRUE)
 f_csv <- file.path(CARPETA_SALIDA, "indicadores_panel.csv")
 f_rds <- file.path(CARPETA_SALIDA, "indicadores_panel.rds")
 f_dic <- file.path(CARPETA_SALIDA, "diccionario_variables.csv")

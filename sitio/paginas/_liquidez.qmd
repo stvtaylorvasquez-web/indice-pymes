@@ -1,4 +1,4 @@
-# Liquidez y deuda
+# Liquidez
 
 ## Row {height="auto"}
 

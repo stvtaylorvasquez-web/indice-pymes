@@ -1,0 +1,44 @@
+# Semillero
+
+## Row {height="auto"}
+
+```{ojs}
+//| padding: 0
+html`<div class="odin-portada">
+  <img src="assets/odin-logo-color.svg" alt="ODIN · Observatorio de Investigación">
+  <div>
+    <div class="kicker">Semillero de Investigación Pensamiento y Praxis · Pontificia Universidad Javeriana Cali</div>
+    <h2>Quiénes somos y en qué trabajamos</h2>
+    <p><b>ODIN</b> es el observatorio de investigación del semillero. Su primer producto es este
+    <b>Índice de Salud Financiera PYME</b>: datos abiertos de ${fEnt(meta.empresas)} sociedades colombianas para investigadores,
+    estudiantes y cualquier persona interesada. Aquí se presentan las líneas de trabajo de los semilleristas y los eventos en los que hemos participado.</p>
+  </div></div>`
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Trabajos en curso"
+{
+  const lineas = Array.from(new Set(trabajos.map(d => d.linea)))
+  const colores = ["#2C5697", "#E8703A", "#067647", "#B42318", "#7A4BB0", "#0E7C86", "#D9A400", "#1E3D6E"]
+  const color = new Map(lineas.map((l, i) => [l, colores[i % colores.length]]))
+  return html`<div class="subtitulo">${trabajos.length} trabajos de investigación en ${lineas.length} líneas temáticas.</div>
+  <div class="trabajos">${trabajos.map(t => html`<article class="trabajo" style="--c:${color.get(t.linea)}">
+    <div class="trabajo-linea">${t.linea}</div>
+    <h4>${t.titulo}</h4>
+    <div class="integrantes">${t.integrantes.split(";").map(n => html`<span><i>●</i>${n.trim()}</span>`)}</div>
+  </article>`)}</div>`
+}
+```
+
+## Row {height="auto"}
+
+```{ojs}
+//| title: "Eventos en los que hemos participado"
+html`<div class="subtitulo">Haga clic en una foto para verla en tamaño completo.</div>
+<div class="galeria">${eventos.map(e => html`<figure class="foto">
+  <a href="semillero/${e.archivo}" target="_blank" rel="noopener"><img src="semillero/${e.archivo}" alt="${e.titulo}" loading="lazy"></a>
+  <figcaption><b>${e.titulo}</b>${e.detalle ? html`<span>${e.detalle}</span>` : ""}${e.fecha ? html`<small>${e.fecha}</small>` : ""}</figcaption>
+</figure>`)}</div>`
+```

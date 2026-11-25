@@ -15,11 +15,12 @@
            ${fDec(inicio.z)} a <b>${fDec(actual.z)}</b>.`
     : html`La mediana del Z' de Altman en el periodo fue <b>${fDec(actual.z)}</b>.`
   return html`<div class="hero"><div class="hero-txt">
-    <div class="kicker">Índice de salud financiera · ${anio === "*" ? `${anioMin}–${anioMax}` : `corte ${anio}`}</div>
+    <div class="kicker">ODIN · Índice de salud financiera · ${anio === "*" ? `${anioMin}–${anioMax}` : `corte ${anio}`}</div>
     <h2>${cuando}, ${fPct(actual.dist)} de las ${fEnt(actual.n)} empresas${ambito}
         estaba en zona de Distress.</h2>
     <p>${tend} El Distress es una señal contable de deterioro, no una quiebra observada.</p>
-  </div><img class="hero-logo" src="assets/logo-javeriana-cali-blanco.png" alt="Pontificia Universidad Javeriana Cali"></div>`
+  </div><div class="hero-logos"><img class="logo-odin" src="assets/odin-logo-blanco.svg" alt="ODIN · Observatorio de Investigación">
+    <span class="separador"></span><img class="hero-logo" src="assets/logo-javeriana-cali-blanco.png" alt="Pontificia Universidad Javeriana Cali"></div></div>`
 }
 ```
 

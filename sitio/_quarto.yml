@@ -4,5 +4,6 @@ project:
   resources:
     - datos/*
     - assets/*
+    - semillero/*
 
 lang: es

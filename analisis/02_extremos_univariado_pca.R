@@ -9,13 +9,13 @@
 # =============================================================================
 
 # ---- CONFIGURACIÓN ----------------------------------------------------------
-RUTA_RDS <- "indicadores_panel.rds"
+RUTA_RDS <- "resultados/indicadores_panel.rds"
 P_INF <- 0.01   # winsorización: percentil inferior (por año)
 P_SUP <- 0.99   # winsorización: percentil superior (por año)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) >= 1) RUTA_RDS <- args[1]
-CARPETA <- file.path(dirname(RUTA_RDS), "resultados")
+CARPETA <- dirname(RUTA_RDS)
 dir.create(CARPETA, showWarnings = FALSE)
 t0 <- Sys.time()
 guardar <- function(df, nombre) {

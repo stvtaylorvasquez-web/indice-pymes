@@ -55,6 +55,13 @@ Holgada = ninguna. Los intervalos de confianza del 95% usan el método de Wilson
 están en zona Gris o Segura. Variables: Z', indicadores que no forman parte del Z', tamaño, crecimiento y sector.
 Se estimó con 2017–2020 y se validó con 2021–2024 (AUC 0,855). Niveles: Baja < 2%, Moderada 2–5%, Alta 5–15%, Muy alta > 15%.
 
+**Inductores de valor.** Siguiendo el enfoque de inductores de valor (Oscar León García): margen operacional
+(utilidad operacional / ingresos; la base no reporta depreciación, por lo que se usa como aproximación del margen EBITDA),
+PKT = (cuentas por cobrar + inventarios − proveedores) / ingresos, palanca de crecimiento PDC = margen / PKT (mayor que 1 es favorable),
+productividad del activo fijo = ingresos / propiedades, planta y equipo, y crecimiento nominal de ingresos. Una empresa "crea valor"
+cuando su rentabilidad operativa después de impuestos (utilidad operacional × (1 − 35%) / activo total) supera el costo de capital
+elegido en la pestaña. Es una aproximación: usa el activo total en lugar de los activos netos de operación y un mismo costo de capital para todas.
+
 **¿Por qué caen?** Para cada empresa que pasa de zona Gris o Segura a Distress de un año al siguiente, se calcula el cambio
 en la contribución de cada componente al Z' (peso × razón) y se identifica el que más bajó (script 03, D3).
 :::

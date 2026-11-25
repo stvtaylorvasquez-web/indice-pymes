@@ -23,7 +23,8 @@ CONJUNTOS = [
   {k: "panel", nombre: "Panel empresa-año (con filtros)", desc: "Una fila por empresa y año con sus indicadores, zona del Z' y cuadrante.",
    filas: () => sel.map(d => { const o = {nit: d.nit, razon_social: nomEmpresa.get(d.nit), anio: d.anio, sector: nomSector.get(d.sec), seccion_ciiu: d.sec,
      departamento: nomDepto(d.dep), zona: nomZona.get(d.zona) ?? "", cuadrante: d.cuad ? CUADS[d.cuad - 1].nombre : ""}
-     for (const c of columnasPanel) o[c] = d[c]; return o })},
+     for (const c of columnasPanel) o[c] = d[c]
+     o.pkt = d.pkt; o.prod_activo_fijo = d.paf; o.crecimiento_ingresos = d.crec; return o })},
   {k: "sector", nombre: "Indicadores por sector (con filtros)", desc: "Medianas por sección CIIU.", filas: () => tablaPor("sec", "sector", s => nomSector.get(s) ?? s)},
   {k: "depto", nombre: "Indicadores por departamento (con filtros)", desc: "Medianas por departamento del domicilio.", filas: () => tablaPor("dep", "departamento", nomDepto)},
   {k: "anual", nombre: "Serie anual 2016–2025 (con filtros de sector y departamento)", desc: "Una fila por año: % en cada zona e indicadores medianos.",

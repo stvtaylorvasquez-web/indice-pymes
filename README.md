@@ -1,85 +1,78 @@
-# Salud Financiera PYME · Colombia 2016–2025
+# ODIN · Salud Financiera PYME · Colombia 2016–2025
 
-Tablero público del índice de salud financiera de las sociedades que reportan a la Superintendencia de
-Sociedades bajo NIIF para Pymes. Semillero de Investigación Pensamiento y Praxis, Pontificia Universidad Javeriana Cali.
+Primer producto de **ODIN**, el observatorio de investigación del Semillero de Investigación Pensamiento y Praxis
+(Pontificia Universidad Javeriana Cali): un tablero público sobre la salud financiera de las sociedades que reportan
+a la Superintendencia de Sociedades bajo NIIF para Pymes.
 
-**Ver el tablero:** https://stvtaylorvasquez-web.github.io/indice-pymes/. Funciona en cualquier navegador y en el celular, sin instalar nada.
+**Ver el tablero:** https://stvtaylorvasquez-web.github.io/indice-pymes/ (navegador o celular, sin instalar nada).
 
-## Cómo está organizado
+## Estructura
 
 ```
-analisis/            Motor de cálculo en R (lo mantiene el semillero)
-  00_ejecutar_todo.R   Corre todo en orden (01 → 06)
-  01 … 04              Limpieza, univariado, bivariado, multivariado
-  05_exportar_powerbi.R  Tablas para Power BI (uso interno)
-  06_exportar_web.R      Archivos livianos para el sitio → sitio/datos/
-sitio/               Tablero web (Quarto + Observable)
-  index.qmd            Filtros globales, carga de datos y funciones compartidas
-  paginas/             Una pestaña por archivo:
-    _panorama.qmd        Panorama (mapa, sectores, indicadores clave, qué mejoró y qué empeoró)
-    _indicadores.qmd     Indicadores por sector, evolución y ranking
-    _liquidez.qmd        Cuadrantes de liquidez y deuda, deciles de endeudamiento
-    _zscore.qmd          Z' de Altman: zonas, distribución, transiciones, rachas
-    _porque.qmd          ¿Por qué caen? Componentes del Z' que explican la caída a Distress
-    _empresas.qmd        Ficha por empresa con buscador
-    _alerta.qmd          Alerta temprana del año siguiente
-    _datos.qmd           Centro de descargas (CSV y Excel)
-    _metodologia.qmd     Metodología y limitaciones
-  datos/               Archivos que genera el script 06 (+ departamentos.geojson, fijo)
-  estilos/javeriana.scss  Colores y tipografía institucional
-  assets/              Logo
-.github/workflows/   Publicación automática en GitHub Pages
+indice-pymes/
+├── analisis/                  Cálculo en R (lo corre quien actualiza los datos)
+│   ├── 00_ejecutar_todo.R       Corre todo en orden: 01 → 05
+│   ├── 01 … 04                  Limpieza, univariado, bivariado y multivariado
+│   ├── 05_exportar_web.R        Escribe los datos del tablero en sitio/datos
+│   ├── 3 PYMES FABIO.Rproj      Abrir con doble clic antes de correr
+│   ├── BD_INDICADORES_…xlsx     Base original (solo en el computador, no se sube)
+│   └── resultados/              Salidas intermedias de R (se regeneran, no se suben)
+├── sitio/                     Tablero web
+│   ├── index.qmd                Filtros, carga de datos y funciones compartidas
+│   ├── estilo.scss              Colores y tipografía institucional
+│   ├── paginas/                 Una pestaña por archivo
+│   ├── datos/                   Datos del tablero (los escribe el script 05)
+│   ├── semillero/               trabajos.csv, eventos.csv y fotos de eventos
+│   └── assets/                  Logos de ODIN y de la Javeriana
+└── .github/                   Publicación automática en GitHub Pages (no tocar)
 ```
 
-**Principio:** R calcula y el sitio solo muestra. Quien consulta el tablero no necesita R, ni Excel, ni Power BI.
+**Principio:** R calcula y el sitio solo muestra. Quien consulta el tablero no necesita R ni Excel.
 
-## Actualizar los datos (por ejemplo, cuando salga el corte 2026)
+## Actualizar los datos
 
-1. Copiar el Excel nuevo en `analisis/` con el nombre que esperan los scripts (`BD_INDICADORES_…xlsx`). El Excel **no** se sube a GitHub.
-2. Abrir `analisis/3 PYMES FABIO.Rproj` en RStudio, abrir `00_ejecutar_todo.R` y presionar **Source**.
-3. Al final, el script 06 sobrescribe los archivos de `sitio/datos/`.
-4. Subir esos cambios a GitHub (en RStudio: pestaña *Git* → *Commit* → *Push*, o arrastrando los archivos en github.com).
-5. En 1 o 2 minutos el sitio se actualiza solo, y el link sigue siendo el mismo.
+1. Poner el Excel en `analisis/` (si cambia el nombre, ajustar `RUTA_EXCEL` en los scripts 01, 04 y 05).
+2. Doble clic en `analisis/3 PYMES FABIO.Rproj` → abrir `00_ejecutar_todo.R` → **Source**. Debe terminar con "LISTO".
+3. Revisar: abrir `sitio/index.qmd` → **Render**.
+4. GitHub Desktop: resumen del cambio → **Commit to main** → **Push origin**. El sitio se actualiza en unos 2 minutos.
 
-## Agregar o modificar una pestaña
+## Pestañas
 
-Cada pestaña es un archivo en `sitio/paginas/`. Para modificar una, se edita su archivo.
+| Pestaña | Archivo |
+|---|---|
+| Semillero | `paginas/_semillero.qmd` (contenido en `sitio/semillero/`) |
+| Panorama | `paginas/_panorama.qmd` |
+| Indicadores | `paginas/_indicadores.qmd` |
+| Inductores | `paginas/_inductores.qmd` |
+| Liquidez | `paginas/_liquidez.qmd` |
+| Z' Altman | `paginas/_zscore.qmd` |
+| ¿Por qué caen? | `paginas/_porque.qmd` |
+| Empresas | `paginas/_empresas.qmd` |
+| Alerta | `paginas/_alerta.qmd` |
+| Descargas | `paginas/_datos.qmd` |
+| Metodología | `paginas/_metodologia.qmd` |
 
-Para **agregar una pestaña nueva**:
+**Pestaña nueva:** crear `sitio/paginas/_nueva.qmd` (primera línea `# Nombre`) y agregar
+`{{< include paginas/_nueva.qmd >}}` al final de `sitio/index.qmd`, en el orden en que debe aparecer.
 
-1. Crear `sitio/paginas/_nueva.qmd`. La primera línea es el nombre de la pestaña: `# Nueva`.
-2. Dentro, cada **fila** es `## Row {height="auto"}` y cada **tarjeta** es un bloque ```` ```{ojs} ```` con `//| title: "…"`.
-3. Agregar al final de `sitio/index.qmd` la línea `{{< include paginas/_nueva.qmd >}}`.
+**Semillero:** los trabajos se editan en `sitio/semillero/trabajos.csv` (integrantes separados por punto y coma) y los eventos
+en `sitio/semillero/eventos.csv`. Cada foto (JPG, máximo 1400 px) va en la misma carpeta `sitio/semillero/`.
 
-Dentro de cualquier tarjeta se pueden usar:
-- Datos: `datos` (todo el panel), `base` (filtrado por sector y departamento), `sel` (además por año), `alerta`, `geo` (mapa).
-- Filtros: `anio`, `sector`, `depto`.
-- Funciones: `resumen(filas)` (medianas y % por zona), `conPNG(grafico, "nombre")` (botón de imagen),
-  `botonesDescarga(() => filas, "nombre")` (CSV y Excel), `fijar(viewof sector, "F")` (cambiar un filtro desde un gráfico).
-- Tamaños: `anchoMedio` (media fila) y `anchoCompleto` (fila completa). Todo `Plot.plot` debe llevar `width` y `height`.
+### Reglas para programar tarjetas
 
-Dos reglas de Quarto que conviene saber: no escribir una celda como `x = ({...})` (usar `Object.assign({}, {...})`),
-y cada celda con `//| output: false` debe definir una sola variable.
+- Datos disponibles: `datos` (panel completo), `base` (filtrado por sector y departamento), `sel` (además por año), `alerta`, `geo`.
+- Filtros: `anio`, `sector`, `depto`. Funciones: `resumen()`, `conPNG()`, `botonesDescarga()`, `fijar()`.
+- Todo `Plot.plot` lleva `width` y `height` (`anchoMedio`, `anchoCompleto`, `anchoTercio`).
+- No escribir una celda como `x = ({...})` (usar `Object.assign({}, {...})`); cada celda `//| output: false` define una sola variable.
 
-Para un indicador nuevo: agregar la columna en `06_exportar_web.R`, volver a correrlo y usarla en la página.
+## Opciones del script 05
 
-Para ver los cambios antes de publicarlos: abrir `sitio/index.qmd` en RStudio y presionar **Render**.
-
-## Logo institucional
-
-`sitio/assets/logo-javeriana-cali.png` es el logo oficial (escudo central sobre azul). Para el sitio se usa
-`logo-javeriana-cali-blanco.png`, el mismo logo con fondo transparente y en blanco, ubicado en el encabezado azul
-a 120 px de alto (el Manual de Identidad pide un mínimo digital de 88 px para el escudo central). El logo no se modifica.
-
-Colores institucionales usados: azul `#2C5697` (Pantone 7685C) y amarillo `#F8CD00` (Pantone 7405C).
-
-## Opciones del script 06
-
-`PUBLICAR_ALERTA_POR_EMPRESA <- TRUE` muestra la tabla de alerta con el nombre de cada empresa. Con `FALSE` el tablero
-solo publica la alerta agregada por sector. Decisión del semillero.
+- `TASA_IMPUESTO <- 0.35`: tarifa para la rentabilidad operativa después de impuestos (inductores de valor).
+- `PUBLICAR_ALERTA_POR_EMPRESA <- TRUE`: con `FALSE` la alerta solo se publica agregada por sector.
 
 ## Notas metodológicas
 
-- Panel balanceado: 7.772 sociedades que reportaron los 10 años, lo que implica un posible sesgo de supervivencia.
+- Panel balanceado: 7.772 sociedades que reportaron los 10 años (posible sesgo de supervivencia).
 - "Distress" es la zona de riesgo del Z' de Altman (Z' < 1,23), una señal contable. **No es quiebra observada.**
 - "Pymes" se refiere al marco contable NIIF Grupo 2, no al tamaño legal de la empresa (Decreto 957 de 2019).
+- Logos: el de la Javeriana es el oficial (`assets/logo-javeriana-cali*.png`); el de ODIN está en `assets/odin-*.svg`.
