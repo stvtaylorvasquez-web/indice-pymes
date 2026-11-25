@@ -21,7 +21,7 @@ html`<div class="odin-portada">
 //| title: "Trabajos en curso"
 {
   const lineas = Array.from(new Set(trabajos.map(d => d.linea)))
-  const colores = ["#2C5697", "#E8703A", "#067647", "#B42318", "#7A4BB0", "#0E7C86", "#D9A400", "#1E3D6E"]
+  const colores = ["#2C5697", "#E8703A", "#067647", "#B42318", "#7A4BB0", "#0E7C86", "#D9A400", "#1E3D6E", "#C2185B"]
   const color = new Map(lineas.map((l, i) => [l, colores[i % colores.length]]))
   return html`<div class="subtitulo">${trabajos.length} trabajos de investigación en ${lineas.length} líneas temáticas.</div>
   <div class="trabajos">${trabajos.map(t => html`<article class="trabajo" style="--c:${color.get(t.linea)}">

@@ -7,6 +7,22 @@ format:
     include-in-header:
       text: |
         <link rel="icon" type="image/svg+xml" href="assets/odin-sello-color.svg">
+        <script>
+          // Oculta la barra de filtros "Explorar" en las pestañas que no usan filtros.
+          // Para cambiar la lista, editar PESTANAS_SIN_FILTROS (id de la pestaña: "tab-" + nombre).
+          const PESTANAS_SIN_FILTROS = ["tab-semillero", "tab-empresas", "tab-metodología"];
+          document.addEventListener("DOMContentLoaded", () => {
+            const actualizar = () => {
+              const activa = document.querySelector(".navbar .nav-link.active");
+              const sin = activa && PESTANAS_SIN_FILTROS.includes(activa.id);
+              document.body.classList.toggle("sin-filtros", !!sin);
+              window.dispatchEvent(new Event("resize"));
+            };
+            document.querySelectorAll('.navbar .nav-link[data-bs-toggle="tab"]').forEach(a => a.addEventListener("shown.bs.tab", actualizar));
+            actualizar();
+            setTimeout(actualizar, 500);
+          });
+        </script>
     scrolling: true
     nav-buttons:
       - icon: github

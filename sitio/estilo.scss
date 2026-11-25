@@ -329,3 +329,8 @@ form.oi-3a86ea-table, .card form[class*="-table"] { font-size: .82rem; }
 .integrantes { gap: .4rem; margin-top: .2rem; }
 .integrantes span { background: #EEF3FA; border: 1px solid #C9D6EC; color: $jav-azul-osc; font-weight: 700; font-size: .84rem; padding: .22rem .7rem; }
 .integrantes span i { font-style: normal; color: var(--c); margin-right: .35rem; font-size: .7rem; }
+// Pestañas sin filtros: se oculta la barra "Explorar"
+body.sin-filtros .bslib-sidebar-layout > aside.sidebar,
+body.sin-filtros .bslib-sidebar-layout > .collapse-toggle { display: none !important; }
+body.sin-filtros .bslib-sidebar-layout { grid-template-columns: minmax(0, 1fr) !important; }
+body.sin-filtros .bslib-sidebar-layout > .main { grid-column: 1 / -1 !important; }
