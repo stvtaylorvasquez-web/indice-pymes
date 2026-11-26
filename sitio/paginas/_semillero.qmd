@@ -5,10 +5,10 @@
 ```{ojs}
 //| padding: 0
 html`<div class="odin-portada">
-  <img src="assets/odin-logo.png" alt="ODIN · Observatorio de Desarrollo, Innovación y Negocios">
+  <img class="portada-odin" src="assets/odin-logo.png" alt="ODiN · Observatorio de Desarrollo, Innovación y Negocios">
   <div>
     <div class="kicker">Semillero de Investigación Pensamiento y Praxis · Pontificia Universidad Javeriana Cali</div>
-    <h2>ODIN · Observatorio de Desarrollo, Innovación y Negocios</h2>
+    <h2>OD<span class="odin-i">i</span>N · Observatorio de Desarrollo, Innovación y Negocios</h2>
     <p class="lema">Transformando datos en inteligencia para la competitividad.</p>
   </div>
   <img class="portada-javeriana" src="assets/logo-javeriana-cali-azul.png" alt="Pontificia Universidad Javeriana Cali">
@@ -21,14 +21,14 @@ html`<div class="odin-portada">
 //| padding: 0
 html`<div class="mision-vision">
   <article><div class="mv-etiqueta">Misión</div>
-    <p>ODIN es el observatorio del Semillero de Investigación Pensamiento y Praxis de la Pontificia Universidad Javeriana Cali.
+    <p>ODiN es el observatorio del Semillero de Investigación Pensamiento y Praxis de la Pontificia Universidad Javeriana Cali.
     Su misión es transformar datos abiertos en conocimiento útil para la toma de decisiones. Analiza la salud financiera,
     la generación de valor, el riesgo y la competitividad de las empresas, los sectores y los territorios de Colombia,
     con énfasis en las pymes y en el suroccidente del país. Lo hace con rigor académico y con herramientas de analítica y
     benchmarking de libre acceso. Fiel a la formación integral y al espíritu de servicio de la Javeriana, conecta a estudiantes,
     profesores, empresas y comunidad en una red de conocimiento que contribuye al desarrollo sostenible de la región.</p></article>
   <article><div class="mv-etiqueta">Visión</div>
-    <p>En 2030, ODIN será un referente regional y nacional en inteligencia empresarial basada en datos. Será reconocido por
+    <p>En 2030, ODiN será un referente regional y nacional en inteligencia empresarial basada en datos. Será reconocido por
     la calidad, la apertura y la utilidad de sus indicadores, por formar investigadores capaces de convertir la evidencia en
     decisiones y por articular universidad, empresa y territorio en torno a la innovación y la competitividad.</p></article>
 </div>`
@@ -38,10 +38,24 @@ html`<div class="mision-vision">
 
 ```{ojs}
 //| title: "Líderes del semillero y del observatorio"
-html`<div class="lideres">${lideres.map(l => html`<figure class="lider">
-  <img src="semillero/${l.archivo}" alt="${l.nombre}" loading="lazy">
-  <figcaption><b>${l.nombre}</b><span>${l.cargo}</span></figcaption>
-</figure>`)}</div>`
+{
+  const ICONOS = {
+    orcid: {nombre: "ORCID", svg: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#A6CE39"/><text x="16" y="21" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff">iD</text></svg>`},
+    scholar: {nombre: "Google Académico", svg: `<svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#4285F4"/><path d="M16 7 5 14l11 7 9-5.7V22h2v-8z" fill="#fff"/><path d="M10 18.5V22c0 1.8 2.7 3.2 6 3.2s6-1.4 6-3.2v-3.5L16 22z" fill="#fff"/></svg>`},
+    researchgate: {nombre: "ResearchGate", svg: `<svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#00CCBB"/><text x="15" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#fff">R</text><text x="23" y="15" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="9" fill="#fff">G</text></svg>`},
+    linkedin: {nombre: "LinkedIn", svg: `<svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0A66C2"/><text x="16" y="22.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="16" fill="#fff">in</text></svg>`},
+    cvlac: {nombre: "CvLAC (Minciencias)", svg: `<svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#3366CC"/><text x="16" y="20" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="9" fill="#fff">CvLAC</text></svg>`}
+  }
+  const enlaces = l => Object.keys(ICONOS).filter(k => l[k]).map(k => {
+    const a = html`<a class="perfil-icono" href="${l[k]}" target="_blank" rel="noopener" title="${ICONOS[k].nombre} de ${l.nombre}" aria-label="${ICONOS[k].nombre} de ${l.nombre}"></a>`
+    a.innerHTML = ICONOS[k].svg; return a })
+  return html`<div class="subtitulo">Haga clic en el nombre para ver el perfil en la Javeriana Cali, o en los íconos para sus perfiles académicos.</div>
+  <div class="lideres">${lideres.map(l => html`<figure class="lider">
+    <a href="${l.perfil}" target="_blank" rel="noopener"><img src="semillero/${l.archivo}" alt="${l.nombre}" loading="lazy"></a>
+    <figcaption><a class="lider-nombre" href="${l.perfil}" target="_blank" rel="noopener">${l.nombre}</a><span>${l.cargo}</span>
+      <div class="perfiles">${enlaces(l)}</div></figcaption>
+  </figure>`)}</div>`
+}
 ```
 
 ## Row {height="auto"}
@@ -61,13 +75,14 @@ html`<div class="subtitulo">Haga clic en una foto para verla en tamaño completo
 //| title: "Trabajos en curso"
 {
   const lineas = Array.from(new Set(trabajos.map(d => d.linea)))
-  const colores = ["#2C5697", "#E8703A", "#067647", "#B42318", "#7A4BB0", "#0E7C86", "#D9A400", "#1E3D6E", "#C2185B"]
+  const colores = ["#2C5697", "#E8703A", "#067647", "#B42318", "#7A4BB0", "#0E7C86", "#D9A400", "#1E3D6E", "#C2185B", "#5B6B00"]
   const color = new Map(lineas.map((l, i) => [l, colores[i % colores.length]]))
   return html`<div class="subtitulo">${trabajos.length} trabajos de investigación en ${lineas.length} líneas temáticas.</div>
   <div class="trabajos">${trabajos.map(t => html`<article class="trabajo" style="--c:${color.get(t.linea)}">
-    <div class="trabajo-linea">${t.linea}</div>
+    <div class="trabajo-linea">${t.linea.split("ODiN").flatMap((x, i) => i ? [html`<span class="marca">ODiN</span>`, x] : [x])}</div>
     <h4>${t.titulo}</h4>
-    <div class="integrantes">${t.integrantes.split(";").map(n => html`<span><i>●</i>${n.trim()}</span>`)}</div>
+    ${t.director ? html`<div class="trabajo-director">Investigador principal: <b>${t.director}</b></div>` : ""}
+    <div class="integrantes">${t.rol ? html`<div class="trabajo-rol">${t.rol} (apoyo)</div>` : ""}${t.integrantes.split(";").map(n => html`<span><i>●</i>${n.trim()}</span>`)}</div>
   </article>`)}</div>`
 }
 ```

@@ -1,5 +1,5 @@
-orden,nombre,cargo,archivo
-1,"Fabio Andrés Puerta Guardo","Director del Semillero de Investigación Pensamiento y Praxis y del Observatorio ODIN","lider-fabio-puerta.jpg"
-2,"Julián Andrés Narváez Grisales","Codirector del Semillero de Investigación Pensamiento y Praxis","lider-julian-narvaez.jpg"
-3,"María Fernanda Arenas Méndez","Directora del Departamento de Gestión de las Organizaciones","lider-maria-fernanda-arenas.jpg"
-4,"Diego Alejandro Peláez Cadena","Director del Pregrado de Finanzas","lider-diego-pelaez.jpg"
+orden,nombre,cargo,archivo,perfil,orcid,scholar,researchgate,linkedin,cvlac
+1,Fabio Andrés Puerta Guardo,Director del Semillero de Investigación Pensamiento y Praxis y del Observatorio ODiN,lider-fabio-puerta.jpg,https://www.javerianacali.edu.co/profesores/fabio-andres-puerta-guardo,https://orcid.org/0000-0001-5659-5910,https://scholar.google.com/citations?user=PfuXL-gAAAAJ&hl=es,https://www.researchgate.net/profile/Fabio-Puerta-Guardo,,
+2,Julián Andrés Narváez Grisales,Codirector del Semillero de Investigación Pensamiento y Praxis,lider-julian-narvaez.jpg,https://www.javerianacali.edu.co/profesores/julian-andres-narvaez-grisales,https://orcid.org/0000-0002-5817-7699,https://scholar.google.es/citations?user=DC3sHWcAAAAJ&hl=es,,https://www.linkedin.com/in/juli%C3%A1n-andr%C3%A9s-narv%C3%A1ez-grisales-aab12570/,
+3,María Fernanda Arenas Méndez,Directora del Departamento de Gestión de las Organizaciones,lider-maria-fernanda-arenas.jpg,https://www.javerianacali.edu.co/profesores/maria-fernanda-arenas-mendez,https://orcid.org/0000-0002-6864-9717,,,https://www.linkedin.com/in/maria-fernanda-arenas-m%C3%A9ndez-730349165/,
+4,Diego Alejandro Peláez Cadena,Director del Pregrado de Finanzas,lider-diego-pelaez.jpg,https://www.javerianacali.edu.co/profesores/diego-alejandro-pelaez-cadena,https://orcid.org/0000-0001-5888-7642,,,https://www.linkedin.com/in/diegoapelaezc/,
