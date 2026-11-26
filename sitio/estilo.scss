@@ -401,3 +401,24 @@ body.sin-filtros .bslib-sidebar-layout > .main { grid-column: 1 / -1 !important;
   .navbar .navbar-collapse { flex: 1 1 auto; }
   .navbar .navbar-collapse .navbar-nav { flex: 1 1 auto; justify-content: space-evenly; margin-right: 1rem !important; }
 }
+// ---- Logo horizontal de ODiN, enlaces de líderes y roles en trabajos ----------------
+.odin-portada .portada-odin { height: 104px; width: auto; }
+.odin-i { color: #02B5D6; }
+.hero-logos .logo-odin { height: 78px !important; }
+@media (max-width: 992px) { .hero-logos .logo-odin { height: 62px !important; } }
+@media (max-width: 576px) { .hero-logos .logo-odin { height: 50px !important; } .odin-portada .portada-odin { height: 84px; margin: 0 auto; } }
+.lider > a { display: block; }
+.lider figcaption .lider-nombre { color: #1F2430; font-weight: 500; font-size: .95rem; line-height: 1.25; text-decoration: none; }
+.lider figcaption .lider-nombre:hover { color: $jav-azul; text-decoration: underline; }
+.lider .perfiles { display: flex; gap: .45rem; margin-top: .45rem; flex-wrap: wrap; }
+.lider .perfil-icono { display: inline-flex; width: 28px; height: 28px; border-radius: 7px; transition: transform .15s ease, box-shadow .15s ease; }
+.lider .perfil-icono svg { width: 100%; height: 100%; display: block; }
+.lider .perfil-icono:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(20,33,61,.18); }
+.trabajo-director { font-size: .8rem; color: $tinta-2; margin: .1rem 0 .45rem; }
+.trabajo-director b { color: #1F2430; font-weight: 600; }
+.trabajo-rol { width: 100%; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: $tinta-2; font-weight: 600; }
+.marca { text-transform: none !important; }
+// Íconos de perfiles: tamaño estándar pequeño
+.lider .perfiles { gap: .3rem; margin-top: .35rem; }
+.lider .perfil-icono { width: 18px; height: 18px; border-radius: 4px; opacity: .9; }
+.lider .perfil-icono:hover { opacity: 1; transform: translateY(-1px); box-shadow: none; }
